@@ -1,0 +1,87 @@
+services:
+  mysql:
+    image: mysql:latest
+    container_name: MySQL
+    command: --max_allowed_packet=1073741824 --innodb_buffer_pool_size=1G
+    environment:
+      MYSQL_DATABASE: data
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+        - P:/IntelliJProjects/DatabasePerformance/databases/mysql:/var/lib/mysql
+
+  mariadb:
+    image: mariadb:latest
+    container_name: MariaDB
+    command: --max_allowed_packet=1073741824 --innodb_buffer_pool_size=1G
+    environment:
+      MYSQL_DATABASE: data
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3307:3306"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/mariadb:/var/lib/mysql
+
+  postgresql:
+    image: postgres:latest
+    container_name: PostgreSQL
+    environment:
+      POSTGRES_DB: data
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/postgresql:/var/lib/postgresql/data
+
+  oracle:
+    image: gvenzl/oracle-free:latest
+    container_name: OracleDB
+    environment:
+      ORACLE_PASSWORD: root
+      ORACLE_DATABASE: data
+    ports:
+      - "1521:1521"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/oracle:/opt/oracle/oradata
+
+  microsoft-sql:
+    image: mcr.microsoft.com/mssql/server:latest
+    container_name: MicrosoftSQL
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "yourStrong(!)Password"
+    ports:
+      - "1433:1433"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/microsoft-sql:/var/opt/data
+    expose:
+      - "1433"
+
+  mongodb:
+    image: mongo:latest
+    container_name: MongoDB
+    environment:
+      MONGO_INITDB_DATABASE: data
+    ports:
+      - "27017:27017"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/mongodb:/data/db
+
+  redis:
+    image: redis:latest
+    container_name: Redis
+    ports:
+      - "6379:6379"
+    volumes:
+        - P:/IntelliJProjects/DatabasePerformance/databases/redis:/data
+
+  neo4j:
+    image: neo4j:latest
+    container_name: Neo4j
+    environment:
+      NEO4J_AUTH: none
+    ports:
+      - "7687:7687"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/neo4j:/data
