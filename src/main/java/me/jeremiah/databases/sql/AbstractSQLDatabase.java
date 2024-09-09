@@ -27,6 +27,11 @@ public abstract class AbstractSQLDatabase implements Database {
     config = new HikariConfig();
     config.setJdbcUrl(url);
     config.setAutoCommit(false);
+    config.setMaximumPoolSize(20);
+    config.setConnectionTimeout(30000);
+    config.setIdleTimeout(600000);
+    config.setMaxLifetime(1800000);
+    config.setMinimumIdle(10);
   }
 
   protected void setUsername(String username) {
@@ -66,7 +71,7 @@ public abstract class AbstractSQLDatabase implements Database {
       statement.execute("CREATE INDEX idx_" + column + " ON entries(" + column + ")");
       connection.commit();
     } catch (SQLException e) {
-      System.out.println("Caught index idx_" + column + " already exist exception, ignoring...");
+      System.out.println("Caught index idx_" + column + " already exists exception, ignoring...");
     }
   }
 

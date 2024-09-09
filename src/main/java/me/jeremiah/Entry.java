@@ -7,6 +7,7 @@ import me.jeremiah.utils.EntryGeneratorUtils;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -20,11 +21,25 @@ public class Entry implements DatabaseSerializable {
   private char middleInitial;
   private String lastName;
 
-  public Entry(int id) {
+  public Entry(int id, byte[] data) {
+    this(id, new String(data, StandardCharsets.UTF_8).split(","));
+  }
+
+  public Entry(int id, String[] data) {
+    if (data.length != 3)
+      throw new IllegalArgumentException("Invalid data length: " + data.length);
     this.id = id;
-    this.firstName = EntryGeneratorUtils.generateFirstName();
-    this.middleInitial = EntryGeneratorUtils.generateMiddleInitial();
-    this.lastName = EntryGeneratorUtils.generateLastName();
+    this.firstName = data[0];
+    this.middleInitial = data[1].charAt(0);
+    this.lastName = data[2];
+  }
+
+  public Entry(int id) {
+    this(id,
+      EntryGeneratorUtils.generateFirstName(),
+      EntryGeneratorUtils.generateMiddleInitial(),
+      EntryGeneratorUtils.generateLastName()
+    );
   }
 
   @Override
@@ -61,6 +76,16 @@ public void serializeUpdate(@NotNull PreparedStatement preparedStatement) throws
       middleInitial == entry.middleInitial &&
       firstName.equals(entry.firstName) &&
       lastName.equals(entry.lastName);
+  }
+
+  @Override
+  public byte[] bytes() {
+    return toString().getBytes(StandardCharsets.UTF_8);
+  }
+
+  @Override
+  public String toString() {
+    return firstName + "," + middleInitial + "," + lastName;
   }
 
 }

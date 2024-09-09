@@ -73,7 +73,7 @@ public class DatabaseTester {
     this.database = database;
     this.entryAmounts = entryAmounts;
     this.maxEntryAmount = Arrays.stream(entryAmounts).max().orElse(0);
-    this.entries = new Entry[entryAmounts[entryAmounts.length - 1]];
+    this.entries = new Entry[maxEntryAmount];
     this.verificationResults = new boolean[entryAmounts.length];
   }
 

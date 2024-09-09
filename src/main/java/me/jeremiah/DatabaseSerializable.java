@@ -14,4 +14,6 @@ public interface DatabaseSerializable {
 
   @NotNull Document toDocument();
 
+  byte[] bytes();
+
 }

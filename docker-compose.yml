@@ -85,3 +85,11 @@ services:
       - "7687:7687"
     volumes:
       - P:/IntelliJProjects/DatabasePerformance/databases/neo4j:/data
+
+  cassandra:
+    image: cassandra:latest
+    container_name: Cassandra
+    ports:
+      - "9042:9042"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/databases/cassandra:/var/lib/cassandra

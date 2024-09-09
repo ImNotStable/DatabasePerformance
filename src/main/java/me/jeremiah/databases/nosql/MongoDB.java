@@ -28,6 +28,7 @@ public class MongoDB implements Database {
     settings = MongoClientSettings.builder()
       .applyConnectionString(new ConnectionString("mongodb://localhost:27017/data"))
       .uuidRepresentation(UuidRepresentation.STANDARD)
+      .applyToConnectionPoolSettings(builder -> builder.maxSize(50))
       .build();
   }
 
@@ -42,7 +43,6 @@ public class MongoDB implements Database {
       throw new IllegalStateException("Client is already open");
     client = MongoClients.create(settings);
     data = client.getDatabase("data");
-    data.getCollection("entries").drop();
     entries = data.getCollection("entries");
     entries.createIndex(new Document("id", 1), new IndexOptions().unique(true));
   }
@@ -71,9 +71,8 @@ public class MongoDB implements Database {
   @Override
   public void update(Entry... entries) {
     List<WriteModel<Document>> updates = new ArrayList<>();
-    for (Entry entry : entries) {
+    for (Entry entry : entries)
       updates.add(new UpdateOneModel<>(new Document("id", entry.getId()), new Document("$set", entry.toDocument())));
-    }
     this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
   }
 
@@ -84,9 +83,8 @@ public class MongoDB implements Database {
   @Override
   public void remove(int... ids) {
     List<WriteModel<Document>> deletes = new ArrayList<>();
-    for (int id : ids) {
+    for (int id : ids)
       deletes.add(new DeleteOneModel<>(new Document("id", id)));
-    }
     this.entries.bulkWrite(deletes, new BulkWriteOptions().ordered(false));
   }
 

@@ -38,6 +38,8 @@ public interface Database {
 
   default boolean verifyData(@NotNull Entry @NotNull ... entries) {
     Map<Integer, Entry> existingEntries = select();
+    if (entries.length != existingEntries.size())
+      return false;
     for (Entry entry : entries)
       if (!existingEntries.containsKey(entry.getId()) || !existingEntries.get(entry.getId()).equals(entry))
         return false;

@@ -1,5 +1,6 @@
 package me.jeremiah.databases.nosql;
 
+import com.google.common.primitives.Ints;
 import me.jeremiah.Entry;
 import me.jeremiah.databases.Database;
 import org.jetbrains.annotations.NotNull;
@@ -7,7 +8,10 @@ import redis.clients.jedis.*;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Redis implements Database {
 
@@ -36,11 +40,11 @@ public class Redis implements Database {
 
   @Override
   public void close() {
-      try {
-        jedisPool.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    try {
+      jedisPool.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -56,13 +60,8 @@ public class Redis implements Database {
   public void insert(@NotNull Entry... entries) {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
-      Map<String, String> rawEntryData = new HashMap<>();
       for (Entry entry : entries) {
-        rawEntryData.put("firstName", entry.getFirstName());
-        rawEntryData.put("middleInitial", String.valueOf(entry.getMiddleInitial()));
-        rawEntryData.put("lastName", entry.getLastName());
-        pipeline.hset(String.valueOf(entry.getId()), rawEntryData);
-        rawEntryData.clear();
+        pipeline.set(Ints.toByteArray(entry.getId()), entry.bytes());
       }
       pipeline.sync();
     } catch (Exception e) {
@@ -105,25 +104,31 @@ public class Redis implements Database {
     try (Jedis jedis = jedisPool.getResource()) {
       String cursor = "0";
       ScanParams scanParams = new ScanParams().match("*").count(100);
+      List<byte[]> keys = new ArrayList<>();
 
+      // Perform the scan operation outside the pipeline
       do {
-        ScanResult<String> scanResult = jedis.scan(cursor, scanParams);
-        List<String> keys = scanResult.getResult();
+        ScanResult<byte[]> scanResult = jedis.scan(cursor.getBytes(), scanParams);
+        keys.addAll(scanResult.getResult());
         cursor = scanResult.getCursor();
-
-        Pipeline pipeline = jedis.pipelined();
-        List<Response<Map<String, String>>> responses = new ArrayList<>();
-        for (String key : keys) {
-          responses.add(pipeline.hgetAll(key));
-        }
-        pipeline.sync();
-
-        for (int i = 0; i < keys.size(); i++) {
-          Map<String, String> entryMap = responses.get(i).get();
-          int id = Integer.parseInt(keys.get(i));
-          entries.put(id, new Entry(id, entryMap.get("firstName"), entryMap.get("middleInitial").charAt(0), entryMap.get("lastName")));
-        }
       } while (!cursor.equals("0"));
+
+      // Use the pipeline to get the values
+      Pipeline pipeline = jedis.pipelined();
+      List<Response<byte[]>> responses = new ArrayList<>();
+      for (byte[] key : keys) {
+        responses.add(pipeline.get(key));
+      }
+      pipeline.sync();
+
+      // Process the responses
+      for (int i = 0; i < keys.size(); i++) {
+        byte[] value = responses.get(i).get();
+        if (value != null) {
+          int id = Ints.fromByteArray(keys.get(i));
+          entries.put(id, new Entry(id, value));
+        }
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
