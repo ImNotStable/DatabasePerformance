@@ -16,7 +16,7 @@ dependencies {
     // SQL Related Dependencies
     implementation 'com.zaxxer:HikariCP:5.1.0'
     // Local
-    implementation 'org.xerial:sqlite-jdbc:3.46.0.1'
+    implementation 'org.xerial:sqlite-jdbc:3.46.1.0'
     implementation 'com.h2database:h2:2.3.232'
     // Remote
     implementation 'com.mysql:mysql-connector-j:9.0.0'
