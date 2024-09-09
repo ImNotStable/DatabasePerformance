@@ -26,7 +26,7 @@ dependencies {
     implementation 'com.microsoft.sqlserver:mssql-jdbc:12.8.0.jre11'
 
     // MongoDB
-    implementation 'org.mongodb:mongodb-driver-sync:5.1.3'
+    implementation 'org.mongodb:mongodb-driver-sync:5.1.4'
 
     // Redis
     implementation 'redis.clients:jedis:5.2.0-beta5'
