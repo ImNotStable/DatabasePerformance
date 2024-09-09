@@ -6,7 +6,7 @@ public class MySQL extends AbstractSQLDatabase {
 
   public MySQL() {
     super(com.mysql.cj.jdbc.Driver.class, "jdbc:mysql://localhost:3306/data");
-    setUsername("root");
+    getConfig().setUsername("root");
   }
 
   @Override

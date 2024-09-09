@@ -32,7 +32,7 @@ public class Redis implements Database {
       poolConfig.setTestOnBorrow(true);
       poolConfig.setTestOnReturn(true);
       poolConfig.setTestWhileIdle(true);
-      jedisPool = new JedisPool(poolConfig, "localhost", 6379);
+      jedisPool = new JedisPool(poolConfig, "localhost", 6379, 100000);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -60,9 +60,8 @@ public class Redis implements Database {
   public void insert(@NotNull Entry... entries) {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
-      for (Entry entry : entries) {
+      for (Entry entry : entries)
         pipeline.set(Ints.toByteArray(entry.getId()), entry.bytes());
-      }
       pipeline.sync();
     } catch (Exception e) {
       e.printStackTrace();
@@ -103,31 +102,25 @@ public class Redis implements Database {
     Map<Integer, Entry> entries = new HashMap<>();
     try (Jedis jedis = jedisPool.getResource()) {
       String cursor = "0";
-      ScanParams scanParams = new ScanParams().match("*").count(100);
+      ScanParams scanParams = new ScanParams().match("*").count(1000);
       List<byte[]> keys = new ArrayList<>();
 
-      // Perform the scan operation outside the pipeline
       do {
         ScanResult<byte[]> scanResult = jedis.scan(cursor.getBytes(), scanParams);
         keys.addAll(scanResult.getResult());
         cursor = scanResult.getCursor();
       } while (!cursor.equals("0"));
 
-      // Use the pipeline to get the values
       Pipeline pipeline = jedis.pipelined();
       List<Response<byte[]>> responses = new ArrayList<>();
-      for (byte[] key : keys) {
+      for (byte[] key : keys)
         responses.add(pipeline.get(key));
-      }
       pipeline.sync();
 
-      // Process the responses
       for (int i = 0; i < keys.size(); i++) {
         byte[] value = responses.get(i).get();
-        if (value != null) {
-          int id = Ints.fromByteArray(keys.get(i));
-          entries.put(id, new Entry(id, value));
-        }
+        int id = Ints.fromByteArray(keys.get(i));
+        entries.put(id, new Entry(id, value));
       }
     } catch (Exception e) {
       e.printStackTrace();

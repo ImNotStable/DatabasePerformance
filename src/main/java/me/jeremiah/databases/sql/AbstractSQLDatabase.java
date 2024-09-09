@@ -32,14 +32,9 @@ public abstract class AbstractSQLDatabase implements Database {
     config.setIdleTimeout(600000);
     config.setMaxLifetime(1800000);
     config.setMinimumIdle(10);
-  }
-
-  protected void setUsername(String username) {
-    config.setUsername(username);
-  }
-
-  protected void setPassword(String password) {
-    config.setPassword(password);
+    config.addDataSourceProperty("cachePrepStmts", "true");
+    config.addDataSourceProperty("prepStmtCacheSize", "250");
+    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
   }
 
   @Override
@@ -51,10 +46,7 @@ public abstract class AbstractSQLDatabase implements Database {
       try (Connection connection = dataSource.getConnection();
            Statement statement = connection.createStatement()) {
         createTable(connection, statement);
-        createIndex(connection, statement, "id");
-        createIndex(connection, statement, "first_name");
-        createIndex(connection, statement, "middle_initial");
-        createIndex(connection, statement, "last_name");
+        createIndex(connection, statement);
       }
     } catch (Exception exception) {
       throw new RuntimeException(exception);
@@ -66,12 +58,12 @@ public abstract class AbstractSQLDatabase implements Database {
     connection.commit();
   }
 
-  private void createIndex(Connection connection, Statement statement, String column) {
+  private void createIndex(Connection connection, Statement statement) {
     try {
-      statement.execute("CREATE INDEX idx_" + column + " ON entries(" + column + ")");
+      statement.execute("CREATE INDEX idx_id ON entries(id)");
       connection.commit();
     } catch (SQLException e) {
-      System.out.println("Caught index idx_" + column + " already exists exception, ignoring...");
+      System.out.println("Caught index idx_id already exists exception, ignoring...");
     }
   }
 
@@ -96,11 +88,16 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void insert(@NotNull Entry... entries) {
+    final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO entries (id, first_name, middle_initial, last_name) VALUES (?,?,?,?)")) {
+      int count = 0;
       for (Entry entry : entries) {
         entry.serializeInsert(preparedStatement);
         preparedStatement.addBatch();
+        if (++count % batchSize == 0) {
+          preparedStatement.executeBatch();
+        }
       }
       preparedStatement.executeBatch();
       connection.commit();
@@ -111,11 +108,16 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void update(@NotNull Entry... entries) {
+    final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement("UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ? WHERE id = ?")) {
+      int count = 0;
       for (Entry entry : entries) {
         entry.serializeUpdate(preparedStatement);
         preparedStatement.addBatch();
+        if (++count % batchSize == 0) {
+          preparedStatement.executeBatch();
+        }
       }
       preparedStatement.executeBatch();
       connection.commit();
@@ -139,11 +141,15 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void remove(int... ids) {
+    final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM entries WHERE id = ?")) {
+      int count = 0;
       for (int id : ids) {
         preparedStatement.setInt(1, id);
         preparedStatement.addBatch();
+        if (++count % batchSize == 0)
+          preparedStatement.executeBatch();
       }
       preparedStatement.executeBatch();
       connection.commit();

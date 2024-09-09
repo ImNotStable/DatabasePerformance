@@ -6,7 +6,7 @@ public class MariaDB extends AbstractSQLDatabase {
 
   public MariaDB() {
     super(org.mariadb.jdbc.Driver.class, "jdbc:mariadb://localhost:3307/data");
-    setUsername("root");
+    getConfig().setUsername("root");
   }
 
   @Override
