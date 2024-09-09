@@ -21,7 +21,7 @@ dependencies {
     // Remote
     implementation 'com.mysql:mysql-connector-j:9.0.0'
     implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1'
-    implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'org.postgresql:postgresql:42.7.4'
     implementation 'com.oracle.database.jdbc:ojdbc11:23.5.0.24.07'
     implementation 'com.microsoft.sqlserver:mssql-jdbc:12.8.0.jre11'
 
