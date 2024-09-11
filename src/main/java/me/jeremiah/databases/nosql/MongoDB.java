@@ -21,7 +21,6 @@ public class MongoDB implements Database {
 
   protected final MongoClientSettings settings;
   private MongoClient client;
-  private MongoDatabase data;
   private MongoCollection<Document> entries;
 
   public MongoDB() {
@@ -42,8 +41,8 @@ public class MongoDB implements Database {
     if (client != null)
       throw new IllegalStateException("Client is already open");
     client = MongoClients.create(settings);
-    data = client.getDatabase("data");
-    entries = data.getCollection("entries");
+    MongoDatabase database = client.getDatabase("data");
+    entries = database.getCollection("entries");
     entries.createIndex(new Document("id", 1), new IndexOptions().unique(true));
   }
 
@@ -96,7 +95,9 @@ public class MongoDB implements Database {
       entries.put(id, new Entry(id,
         document.getString("first_name"),
         document.getString("middle_initial").charAt(0),
-        document.getString("last_name")
+        document.getString("last_name"),
+        document.getInteger("age"),
+        document.getDouble("net_worth")
       ));
     }
     return entries;

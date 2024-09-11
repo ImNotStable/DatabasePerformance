@@ -61,7 +61,6 @@ public class DatabaseTester {
   private final Database database;
 
   private final int[] entryAmounts;
-  private final int maxEntryAmount;
   private final Entry[] entries;
 
   private final Map<Integer, TestTimings> timings = new LinkedHashMap<>();
@@ -72,14 +71,13 @@ public class DatabaseTester {
   private DatabaseTester(Database database, int... entryAmounts) {
     this.database = database;
     this.entryAmounts = entryAmounts;
-    this.maxEntryAmount = Arrays.stream(entryAmounts).max().orElse(0);
+    int maxEntryAmount = Arrays.stream(entryAmounts).max().orElse(0);
     this.entries = new Entry[maxEntryAmount];
     this.verificationResults = new boolean[entryAmounts.length];
   }
 
   private void generateEntries() {
-    for (int i = 0; i < maxEntryAmount; i++)
-      entries[i] = new Entry(i);
+    Arrays.parallelSetAll(entries, Entry::new);
   }
 
   public void start() {
@@ -143,6 +141,10 @@ public class DatabaseTester {
   private void runRetrievalTest() {
     currentTimings.time(DatabaseOperation.RETRIEVAL);
     database.select();
+  }
+
+  private void runRealismTest() {
+    currentTimings.time(DatabaseOperation.REALISM);
   }
 
   private void close() {

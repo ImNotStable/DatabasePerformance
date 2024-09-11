@@ -48,7 +48,9 @@ public class Cassandra implements Database {
   }
 
   private void createTable() {
-    String query = "CREATE TABLE IF NOT EXISTS data (id int PRIMARY KEY, firstName text, middleInitial text, lastName text);";
+    //String drop = "DROP TABLE IF EXISTS data;";
+    //session.executeAsync(SimpleStatement.newInstance(drop)).toCompletableFuture().join();
+    String query = "CREATE TABLE IF NOT EXISTS data (id int PRIMARY KEY, firstName text, middleInitial text, lastName text, age int, netWorth double);";
     session.executeAsync(SimpleStatement.newInstance(query)).toCompletableFuture().join();
   }
 
@@ -68,10 +70,10 @@ public class Cassandra implements Database {
     List<CompletableFuture<AsyncResultSet>> futures = new ArrayList<>();
     for (int i = 0; i < entries.length; i += MAX_BATCH_SIZE) {
       BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
-      PreparedStatement insertStmt = session.prepareAsync("INSERT INTO data (id, firstName, middleInitial, lastName) VALUES (?, ?, ?, ?);").toCompletableFuture().join();
+      PreparedStatement insertStmt = session.prepareAsync("INSERT INTO data (id, firstName, middleInitial, lastName, age, netWorth) VALUES (?, ?, ?, ?, ?, ?);").toCompletableFuture().join();
       for (int j = i; j < i + MAX_BATCH_SIZE && j < entries.length; j++) {
         Entry entry = entries[j];
-        batchBuilder.addStatement(insertStmt.bind(entry.getId(), entry.getFirstName(), String.valueOf(entry.getMiddleInitial()), entry.getLastName()));
+        batchBuilder.addStatement(insertStmt.bind(entry.getId(), entry.getFirstName(), String.valueOf(entry.getMiddleInitial()), entry.getLastName(), entry.getAge(), entry.getNetWorth()));
       }
       futures.add(session.executeAsync(batchBuilder.build()).toCompletableFuture());
     }
@@ -83,10 +85,10 @@ public class Cassandra implements Database {
     List<CompletableFuture<AsyncResultSet>> futures = new ArrayList<>();
     for (int i = 0; i < entries.length; i += MAX_BATCH_SIZE) {
       BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
-      PreparedStatement updateStmt = session.prepareAsync("UPDATE data SET firstName = ?, middleInitial = ?, lastName = ? WHERE id = ?;").toCompletableFuture().join();
+      PreparedStatement updateStmt = session.prepareAsync("UPDATE data SET firstName = ?, middleInitial = ?, lastName = ?, age = ?, netWorth = ? WHERE id = ?;").toCompletableFuture().join();
       for (int j = i; j < i + MAX_BATCH_SIZE && j < entries.length; j++) {
         Entry entry = entries[j];
-        batchBuilder.addStatement(updateStmt.bind(entry.getFirstName(), String.valueOf(entry.getMiddleInitial()), entry.getLastName(), entry.getId()));
+        batchBuilder.addStatement(updateStmt.bind(entry.getFirstName(), String.valueOf(entry.getMiddleInitial()), entry.getLastName(), entry.getAge(), entry.getNetWorth(), entry.getId()));
       }
       futures.add(session.executeAsync(batchBuilder.build()).toCompletableFuture());
     }
@@ -124,7 +126,7 @@ public class Cassandra implements Database {
   @Override
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
-    PreparedStatement selectStmt = session.prepareAsync("SELECT id, firstName, middleInitial, lastName FROM data;").toCompletableFuture().join();
+    PreparedStatement selectStmt = session.prepareAsync("SELECT id, firstName, middleInitial, lastName, age, netWorth FROM data;").toCompletableFuture().join();
     CompletableFuture<AsyncResultSet> future = session.executeAsync(selectStmt.bind()).toCompletableFuture();
     try {
       AsyncResultSet resultSet = future.get();
@@ -134,7 +136,9 @@ public class Cassandra implements Database {
           String firstName = row.getString("firstName");
           char middleInitial = row.getString("middleInitial").charAt(0);
           String lastName = row.getString("lastName");
-          entries.put(id, new Entry(id, firstName, middleInitial, lastName));
+          int age = row.getInt("age");
+          double netWorth = row.getDouble("netWorth");
+          entries.put(id, new Entry(id, firstName, middleInitial, lastName, age, netWorth));
         }
         if (resultSet.hasMorePages()) {
           resultSet = resultSet.fetchNextPage().toCompletableFuture().get();

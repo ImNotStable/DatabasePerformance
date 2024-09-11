@@ -1,6 +1,4 @@
-package me.jeremiah.databases.sql.remote;
-
-import me.jeremiah.databases.sql.AbstractSQLDatabase;
+package me.jeremiah.databases.sql;
 
 public class MariaDB extends AbstractSQLDatabase {
 

@@ -51,8 +51,8 @@ public class Neo4j implements Database {
          Transaction tx = session.beginTransaction()) {
       List<Value> records = new ArrayList<>();
       for (Entry entry : entries)
-        records.add(Values.parameters("id", entry.getId(), "firstName", entry.getFirstName(), "middleInitial", String.valueOf(entry.getMiddleInitial()), "lastName", entry.getLastName()));
-      tx.run("UNWIND $batch AS row CREATE (e:Entry {id: row.id, firstName: row.firstName, middleInitial: row.middleInitial, lastName: row.lastName})", Values.parameters("batch", records));
+        records.add(Values.parameters("id", entry.getId(), "firstName", entry.getFirstName(), "middleInitial", String.valueOf(entry.getMiddleInitial()), "lastName", entry.getLastName(), "age", entry.getAge(), "netWorth", entry.getNetWorth()));
+      tx.run("UNWIND $batch AS row CREATE (e:Entry {id: row.id, firstName: row.firstName, middleInitial: row.middleInitial, lastName: row.lastName, age: row.age, netWorth: row.netWorth})", Values.parameters("batch", records));
       tx.commit();
     }
   }
@@ -63,9 +63,9 @@ public class Neo4j implements Database {
          Transaction tx = session.beginTransaction()) {
       List<Value> records = new ArrayList<>();
       for (Entry entry : entries) {
-        records.add(Values.parameters("id", entry.getId(), "firstName", entry.getFirstName(), "middleInitial", String.valueOf(entry.getMiddleInitial()), "lastName", entry.getLastName()));
+        records.add(Values.parameters("id", entry.getId(), "firstName", entry.getFirstName(), "middleInitial", String.valueOf(entry.getMiddleInitial()), "lastName", entry.getLastName(), "age", entry.getAge(), "netWorth", entry.getNetWorth()));
       }
-      tx.run("UNWIND $batch AS row MATCH (e:Entry {id: row.id}) SET e.firstName = row.firstName, e.middleInitial = row.middleInitial, e.lastName = row.lastName", Values.parameters("batch", records));
+      tx.run("UNWIND $batch AS row MATCH (e:Entry {id: row.id}) SET e.firstName = row.firstName, e.middleInitial = row.middleInitial, e.lastName = row.lastName, e.age = row.age, e.netWorth = row.netWorth", Values.parameters("batch", records));
       tx.commit();
     }
   }
@@ -95,11 +95,16 @@ public class Neo4j implements Database {
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
     try (Session session = driver.session(SessionConfig.forDatabase("neo4j"))) {
-      Result result = session.run("MATCH (e:Entry) RETURN e.id AS id, e.firstName AS firstName, e.middleInitial AS middleInitial, e.lastName AS lastName");
+      Result result = session.run("MATCH (e:Entry) RETURN e.id AS id, e.firstName AS firstName, e.middleInitial AS middleInitial, e.lastName AS lastName, e.age AS age, e.netWorth AS netWorth");
       while (result.hasNext()) {
         Record record = result.next();
         int id = record.get("id").asInt();
-        entries.put(id, new Entry(id, record.get("firstName").asString(), record.get("middleInitial").asString().charAt(0), record.get("lastName").asString()));
+        String firstName = record.get("firstName").asString();
+        char middleInitial = record.get("middleInitial").asString().charAt(0);
+        String lastName = record.get("lastName").asString();
+        int age = record.get("age").asInt();
+        double netWorth = record.get("netWorth").asDouble();
+        entries.put(id, new Entry(id, firstName, middleInitial, lastName, age, netWorth));
       }
     }
     return entries;

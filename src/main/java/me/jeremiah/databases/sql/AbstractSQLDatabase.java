@@ -48,14 +48,26 @@ public abstract class AbstractSQLDatabase implements Database {
         createTable(connection, statement);
         createIndex(connection, statement);
       }
-    } catch (Exception exception) {
-      throw new RuntimeException(exception);
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  protected void createTable(Connection connection, Statement statement) throws Exception {
-    statement.execute("CREATE TABLE IF NOT EXISTS entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32))");
-    connection.commit();
+  protected void createTable(Connection connection, Statement statement) {
+//    try {
+//      statement.execute("DROP TABLE entries");
+//      connection.commit();
+//    } catch (SQLException e) {
+//      System.out.println("Caught table entries doesn't exist exception, ignoring...");
+//      System.out.println("Message: " + e.getMessage());
+//    }
+    try {
+      statement.execute("CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))");
+      connection.commit();
+    } catch (SQLException e) {
+      System.out.println("Caught table entries already exists exception, ignoring...");
+      System.out.println("Message: " + e.getMessage());
+    }
   }
 
   private void createIndex(Connection connection, Statement statement) {
@@ -90,7 +102,7 @@ public abstract class AbstractSQLDatabase implements Database {
   public void insert(@NotNull Entry... entries) {
     final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO entries (id, first_name, middle_initial, last_name) VALUES (?,?,?,?)")) {
+         PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)")) {
       int count = 0;
       for (Entry entry : entries) {
         entry.serializeInsert(preparedStatement);
@@ -110,7 +122,7 @@ public abstract class AbstractSQLDatabase implements Database {
   public void update(@NotNull Entry... entries) {
     final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ? WHERE id = ?")) {
+         PreparedStatement preparedStatement = connection.prepareStatement("UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?")) {
       int count = 0;
       for (Entry entry : entries) {
         entry.serializeUpdate(preparedStatement);
@@ -171,7 +183,9 @@ public abstract class AbstractSQLDatabase implements Database {
           entries.put(id, new Entry(id,
             resultSet.getString("first_name"),
             resultSet.getString("middle_initial").charAt(0),
-            resultSet.getString("last_name")
+            resultSet.getString("last_name"),
+            resultSet.getInt("age"),
+            resultSet.getDouble("net_worth")
           ));
         }
       }

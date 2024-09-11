@@ -15,27 +15,17 @@ dependencies {
 
     // SQL Related Dependencies
     implementation 'com.zaxxer:HikariCP:5.1.0'
-    // Local
-    implementation 'org.xerial:sqlite-jdbc:3.46.1.0'
-    implementation 'com.h2database:h2:2.3.232'
-    // Remote
-    implementation 'com.mysql:mysql-connector-j:9.0.0'
+    // Databases
     implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1'
     implementation 'org.postgresql:postgresql:42.7.4'
     implementation 'com.oracle.database.jdbc:ojdbc11:23.5.0.24.07'
     implementation 'com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11'
 
-    // MongoDB
-    implementation 'org.mongodb:mongodb-driver-sync:5.1.4'
-
-    // Redis
-    implementation 'redis.clients:jedis:5.2.0-beta5'
-
-    // Neo4j
-    implementation 'org.neo4j.driver:neo4j-java-driver:5.24.0'
-
-    // Cassandra
-    implementation 'org.apache.cassandra:java-driver-core:4.18.1'
+    // No SQL
+    implementation 'org.mongodb:mongodb-driver-sync:5.1.4' // MongoDB
+    implementation 'redis.clients:jedis:5.2.0-beta5' // Redis
+    implementation 'org.neo4j.driver:neo4j-java-driver:5.24.0' // Neo4j
+    implementation 'org.apache.cassandra:java-driver-core:4.18.1' // Cassandra
 
     // Exporting Results
     implementation 'com.google.code.gson:gson:2.11.0'

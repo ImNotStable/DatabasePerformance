@@ -86,4 +86,12 @@ public class EntryGeneratorUtils {
     return LAST_NAMES[RANDOM.nextInt(LAST_NAMES.length)];
   }
 
+  public static int generateAge() {
+    return RANDOM.nextInt(13, 120);
+  }
+
+  public static double generateNetWorth() {
+    return RANDOM.nextDouble(-100_000_000_000.0, 100_000_000_000.0);
+  }
+
 }
