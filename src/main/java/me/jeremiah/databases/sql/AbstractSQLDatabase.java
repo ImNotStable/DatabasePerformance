@@ -3,7 +3,9 @@ package me.jeremiah.databases.sql;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
+import lombok.Setter;
 import me.jeremiah.Entry;
+import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,15 +15,35 @@ import java.util.Map;
 
 public abstract class AbstractSQLDatabase implements Database {
 
+  private static final int MAX_BATCH_SIZE = 1000;
+
   @Getter
   private final HikariConfig config;
   private HikariDataSource dataSource;
+
+  // Statement Schema
+  @Setter @Getter
+  private String dropTable = "DROP TABLE entries";
+  @Setter @Getter
+  private String createTable = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
+  @Setter @Getter
+  private String wipeTable = "DELETE FROM entries";
+  @Setter @Getter
+  private String insertEntry = "INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)";
+  @Setter @Getter
+  private String updateEntry = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
+  @Setter @Getter
+  private String entryExists = "SELECT * FROM entries WHERE id = ?";
+  @Setter @Getter
+  private String removeEntry = "DELETE FROM entries WHERE id = ?";
+  @Setter @Getter
+  private String selectEntries = "SELECT * FROM entries";
 
   public AbstractSQLDatabase(Class<? extends Driver> driver, String url) {
     try {
       DriverManager.registerDriver(driver.getConstructor().newInstance());
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
     }
 
     config = new HikariConfig();
@@ -46,36 +68,28 @@ public abstract class AbstractSQLDatabase implements Database {
       try (Connection connection = dataSource.getConnection();
            Statement statement = connection.createStatement()) {
         createTable(connection, statement);
-        createIndex(connection, statement);
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
     }
   }
 
   protected void createTable(Connection connection, Statement statement) {
-//    try {
-//      statement.execute("DROP TABLE entries");
-//      connection.commit();
-//    } catch (SQLException e) {
-//      System.out.println("Caught table entries doesn't exist exception, ignoring...");
-//      System.out.println("Message: " + e.getMessage());
-//    }
     try {
-      statement.execute("CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))");
+      System.out.println("Executing dropTable statement...");
+      statement.execute(dropTable);
       connection.commit();
+      System.out.println("dropTable statement executed successfully.");
     } catch (SQLException e) {
-      System.out.println("Caught table entries already exists exception, ignoring...");
-      System.out.println("Message: " + e.getMessage());
+      ExceptionManager.handleException(this, e);
     }
-  }
-
-  private void createIndex(Connection connection, Statement statement) {
     try {
-      statement.execute("CREATE INDEX idx_id ON entries(id)");
+      System.out.println("Executing createTable statement...");
+      statement.execute(createTable);
       connection.commit();
+      System.out.println("createTable statement executed successfully.");
     } catch (SQLException e) {
-      System.out.println("Caught index idx_id already exists exception, ignoring...");
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -91,82 +105,120 @@ public abstract class AbstractSQLDatabase implements Database {
   public void wipe() {
     try (Connection connection = dataSource.getConnection();
          Statement statement = connection.createStatement()) {
-      statement.execute("DELETE FROM entries");
+      statement.execute(wipeTable);
       connection.commit();
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
     }
   }
 
   @Override
   public void insert(@NotNull Entry... entries) {
-    final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)")) {
+         PreparedStatement preparedStatement = connection.prepareStatement(insertEntry)) {
       int count = 0;
       for (Entry entry : entries) {
-        entry.serializeInsert(preparedStatement);
+        parseInsert(entry, preparedStatement);
         preparedStatement.addBatch();
-        if (++count % batchSize == 0) {
+        if (++count % MAX_BATCH_SIZE == 0)
           preparedStatement.executeBatch();
-        }
       }
       preparedStatement.executeBatch();
       connection.commit();
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
+    }
+  }
+
+  protected void parseInsert(Entry entry, PreparedStatement preparedStatement) {
+    try {
+      preparedStatement.setInt(1, entry.getId());
+      preparedStatement.setString(2, entry.getFirstName());
+      preparedStatement.setString(3, String.valueOf(entry.getMiddleInitial()));
+      preparedStatement.setString(4, entry.getLastName());
+      preparedStatement.setInt(5, entry.getAge());
+      preparedStatement.setDouble(6, entry.getNetWorth());
+    } catch (SQLException e) {
+      ExceptionManager.handleException(this, e);
     }
   }
 
   @Override
   public void update(@NotNull Entry... entries) {
-    final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?")) {
+         PreparedStatement preparedStatement = connection.prepareStatement(updateEntry)) {
       int count = 0;
       for (Entry entry : entries) {
-        entry.serializeUpdate(preparedStatement);
+        parseUpdate(entry, preparedStatement);
         preparedStatement.addBatch();
-        if (++count % batchSize == 0) {
+        if (++count % MAX_BATCH_SIZE == 0)
           preparedStatement.executeBatch();
-        }
       }
       preparedStatement.executeBatch();
       connection.commit();
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
+    }
+  }
+
+  protected void parseUpdate(Entry entry, PreparedStatement preparedStatement) {
+    try {
+      preparedStatement.setString(1, entry.getFirstName());
+      preparedStatement.setString(2, String.valueOf(entry.getMiddleInitial()));
+      preparedStatement.setString(3, entry.getLastName());
+      preparedStatement.setInt(4, entry.getAge());
+      preparedStatement.setDouble(5, entry.getNetWorth());
+      preparedStatement.setInt(6, entry.getId());
+    } catch (SQLException e) {
+      ExceptionManager.handleException(this, e);
     }
   }
 
   @Override
   public boolean exists(int id) {
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM entries WHERE id = ?")) {
-      preparedStatement.setInt(1, id);
+         PreparedStatement preparedStatement = connection.prepareStatement(entryExists)) {
+      parseExists(id, preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         return resultSet.next();
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
+    }
+    return false;
+  }
+
+  protected void parseExists(int id, PreparedStatement preparedStatement) {
+    try {
+      preparedStatement.setInt(1, id);
+    } catch (SQLException e) {
+      ExceptionManager.handleException(this, e);
     }
   }
 
   @Override
   public void remove(int... ids) {
-    final int batchSize = 1000;
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM entries WHERE id = ?")) {
+         PreparedStatement preparedStatement = connection.prepareStatement(removeEntry)) {
       int count = 0;
       for (int id : ids) {
-        preparedStatement.setInt(1, id);
+        parseRemove(id, preparedStatement);
         preparedStatement.addBatch();
-        if (++count % batchSize == 0)
+        if (++count % MAX_BATCH_SIZE == 0)
           preparedStatement.executeBatch();
       }
       preparedStatement.executeBatch();
       connection.commit();
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
+    }
+  }
+
+  protected void parseRemove(int id, PreparedStatement preparedStatement) {
+    try {
+      preparedStatement.setInt(1, id);
+    } catch (SQLException e) {
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -175,24 +227,34 @@ public abstract class AbstractSQLDatabase implements Database {
     Map<Integer, Entry> entries = new HashMap<>();
 
     try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM entries")) {
+         PreparedStatement preparedStatement = connection.prepareStatement(selectEntries)) {
 
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         while (resultSet.next()) {
           int id = resultSet.getInt("id");
-          entries.put(id, new Entry(id,
-            resultSet.getString("first_name"),
-            resultSet.getString("middle_initial").charAt(0),
-            resultSet.getString("last_name"),
-            resultSet.getInt("age"),
-            resultSet.getDouble("net_worth")
-          ));
+          entries.put(id, deserializeEntry(id, resultSet));
         }
       }
     } catch (SQLException e) {
-      throw new RuntimeException(e);
+      ExceptionManager.handleException(this, e);
     }
     return entries;
+  }
+
+  protected Entry deserializeEntry(int id, ResultSet resultSet) {
+    try {
+      return new Entry(
+        id,
+        resultSet.getString("first_name"),
+        resultSet.getString("middle_initial").charAt(0),
+        resultSet.getString("last_name"),
+        resultSet.getInt("age"),
+        resultSet.getDouble("net_worth")
+      );
+    } catch (SQLException e) {
+      ExceptionManager.handleException(this, e);
+    }
+    return null;
   }
 
 }

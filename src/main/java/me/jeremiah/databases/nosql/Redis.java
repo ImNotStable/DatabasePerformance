@@ -2,6 +2,7 @@ package me.jeremiah.databases.nosql;
 
 import com.google.common.primitives.Ints;
 import me.jeremiah.Entry;
+import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.*;
@@ -29,12 +30,9 @@ public class Redis implements Database {
       poolConfig.setMaxTotal(128);
       poolConfig.setMaxIdle(128);
       poolConfig.setMinIdle(16);
-      poolConfig.setTestOnBorrow(true);
-      poolConfig.setTestOnReturn(true);
-      poolConfig.setTestWhileIdle(true);
       jedisPool = new JedisPool(poolConfig, "localhost", 6379, 100000);
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -43,7 +41,7 @@ public class Redis implements Database {
     try {
       jedisPool.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -52,7 +50,7 @@ public class Redis implements Database {
     try (Jedis jedis = jedisPool.getResource()) {
       jedis.flushAll();
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -64,7 +62,7 @@ public class Redis implements Database {
         pipeline.set(Ints.toByteArray(entry.getId()), entry.bytes());
       pipeline.sync();
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -76,9 +74,9 @@ public class Redis implements Database {
   @Override
   public boolean exists(int id) {
     try (Jedis jedis = jedisPool.getResource()) {
-      return jedis.exists(String.valueOf(id));
+      return jedis.exists(Ints.toByteArray(id));
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
       return false;
     }
   }
@@ -87,13 +85,13 @@ public class Redis implements Database {
   public void remove(int... ids) {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
-      String[] rawIds = new String[ids.length];
+      byte[][] rawIds = new byte[ids.length][];
       for (int i = 0; i < ids.length; i++)
-        rawIds[i] = String.valueOf(ids[i]);
+        rawIds[i] = Ints.toByteArray(ids[i]);
       pipeline.del(rawIds);
       pipeline.sync();
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
     }
   }
 
@@ -118,12 +116,12 @@ public class Redis implements Database {
       pipeline.sync();
 
       for (int i = 0; i < keys.size(); i++) {
-        byte[] value = responses.get(i).get();
         int id = Ints.fromByteArray(keys.get(i));
+        byte[] value = responses.get(i).get();
         entries.put(id, new Entry(id, value));
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      ExceptionManager.handleException(this, e);
     }
     return entries;
   }

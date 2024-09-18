@@ -8,13 +8,11 @@ import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
 @AllArgsConstructor
 @Setter
 @Getter
-public class Entry implements DatabaseSerializable {
+public class Entry {
 
   private final int id;
   private String firstName;
@@ -47,27 +45,6 @@ public class Entry implements DatabaseSerializable {
     );
   }
 
-  @Override
-  public void serializeInsert(@NotNull PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.setInt(1, id);
-    preparedStatement.setString(2, firstName);
-    preparedStatement.setString(3, String.valueOf(middleInitial));
-    preparedStatement.setString(4, lastName);
-    preparedStatement.setInt(5, age);
-    preparedStatement.setDouble(6, netWorth);
-  }
-
-  @Override
-public void serializeUpdate(@NotNull PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.setString(1, firstName);
-    preparedStatement.setString(2, String.valueOf(middleInitial));
-    preparedStatement.setString(3, lastName);
-    preparedStatement.setInt(4, age);
-    preparedStatement.setDouble(5, netWorth);
-    preparedStatement.setInt(6, id);
-  }
-
-  @Override
   public @NotNull Document toDocument() {
     return new Document()
       .append("id", id)
@@ -81,21 +58,19 @@ public void serializeUpdate(@NotNull PreparedStatement preparedStatement) throws
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
-    if (obj == null || getClass() != obj.getClass()) return false;
-    Entry entry = (Entry) obj;
+    if (!(obj instanceof Entry entry))
+      return false;
     return id == entry.id &&
-      middleInitial == entry.middleInitial &&
       firstName.equals(entry.firstName) &&
+      middleInitial == entry.middleInitial &&
       lastName.equals(entry.lastName) &&
       age == entry.age &&
       netWorth == entry.netWorth;
   }
 
-  @Override
   public byte[] bytes() {
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
          DataOutputStream dos = new DataOutputStream(baos)) {
-      dos.writeInt(id);
       dos.writeUTF(firstName);
       dos.writeChar(middleInitial);
       dos.writeUTF(lastName);
@@ -105,11 +80,6 @@ public void serializeUpdate(@NotNull PreparedStatement preparedStatement) throws
     } catch (IOException e) {
       throw new RuntimeException("Error serializing Entry to bytes", e);
     }
-  }
-
-  @Override
-  public String toString() {
-    return firstName + "," + middleInitial + "," + lastName + "," + age + "," + netWorth;
   }
 
 }

@@ -20,12 +20,9 @@ public class DatabaseTester {
 
   public static Collection<DatabaseTester> testCluster(Collection<Database> databases, int... entryAmount) {
     Collection<DatabaseTester> testers = new ArrayList<>(databases.size());
+
     for (Database database : databases) testers.add(new DatabaseTester(database, entryAmount));
     for (DatabaseTester tester : testers) tester.start();
-
-    testers.stream()
-      .sorted(Comparator.comparing(tester -> tester.timings.values().stream().mapToLong(TestTimings::getTotalTime).sum()))
-      .forEach(tester -> System.out.println(tester.database.getName() + ": " + TimeUtils.formatTime(tester.timings.values().stream().mapToLong(TestTimings::getTotalTime).sum())));
 
     Path logFilePath = Paths.get("P:/IntelliJProjects/DatabasePerformance/logs/test-cluster-" + TimeUtils.getDateTime() + ".json");
     try {
@@ -36,12 +33,19 @@ public class DatabaseTester {
       exception.printStackTrace();
     }
 
+    System.out.println();
+
     JsonObject root = new JsonObject();
     testers.stream()
       .sorted(Comparator.comparing(tester -> tester.timings.values().stream().mapToLong(TestTimings::getTotalTime).sum()))
-      .forEach(tester -> root.add(tester.getDatabase().getName(), tester.toJson()));
+      .forEach(tester -> {
+        System.out.printf("%s: %s (%s) %n",
+          tester.database.getName(),
+          TimeUtils.formatTime(tester.timings.values().stream().mapToLong(TestTimings::getTotalTime).sum()),
+          tester.verified());
+        root.add(tester.getDatabase().getName(), tester.toJson());
+      });
 
-    testers.forEach(tester -> root.add(tester.getDatabase().getName(), tester.toJson()));
     try (FileWriter writer = new FileWriter(new File(logFilePath.toUri()))) {
       writer.write(new GsonBuilder().setPrettyPrinting().create().toJson(root));
     } catch (IOException exception) {
@@ -111,8 +115,7 @@ public class DatabaseTester {
 
   private void runInsertionTest(int entryAmount) {
     currentTimings.time(DatabaseOperation.INSERTION);
-    Entry[] relevantEntries = Arrays.copyOf(entries, entryAmount);
-    database.insert(relevantEntries);
+    database.insert(Arrays.copyOf(entries, entryAmount));
   }
 
   private void runVerificationTest(int index) {
@@ -122,14 +125,12 @@ public class DatabaseTester {
 
   private void runUpdatingTest(int entryAmount) {
     currentTimings.time(DatabaseOperation.UPDATING);
-    Entry[] relevantEntries = Arrays.copyOf(entries, entryAmount);
-    database.update(relevantEntries);
+    database.update(Arrays.copyOf(entries, entryAmount));
   }
 
   private void runRemovalTest(int entryAmount) {
     currentTimings.time(DatabaseOperation.REMOVAL);
-    Entry[] relevantEntries = Arrays.copyOf(entries, entryAmount);
-    database.remove(relevantEntries);
+    database.remove(Arrays.copyOf(entries, entryAmount));
   }
 
   private void runExistenceTest() {
@@ -161,10 +162,10 @@ public class DatabaseTester {
           .collect(Collectors.toMap(
             Map.Entry::getKey,
             Map.Entry::getValue,
-            (existing, replacement) -> existing,
+            (existing, _) -> existing,
             LinkedHashMap::new
           )),
-        (existing, replacement) -> existing,
+        (existing, _) -> existing,
         LinkedHashMap::new
       ));
   }
@@ -196,6 +197,13 @@ public class DatabaseTester {
     } catch (IOException exception) {
       exception.printStackTrace();
     }
+  }
+
+  public boolean verified() {
+    int verified = 0;
+    for (boolean result : verificationResults)
+      if (result) verified++;
+    return verified == verificationResults.length;
   }
 
 }

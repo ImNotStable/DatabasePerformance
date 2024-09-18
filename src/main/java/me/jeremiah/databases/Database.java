@@ -1,6 +1,7 @@
 package me.jeremiah.databases;
 
 import me.jeremiah.Entry;
+import me.jeremiah.ExceptionManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -38,10 +39,12 @@ public interface Database {
 
   default boolean verifyData(@NotNull Entry @NotNull ... entries) {
     Map<Integer, Entry> existingEntries = select();
-    if (entries.length != existingEntries.size())
+    if (entries.length != existingEntries.size()) {
+      ExceptionManager.handleException(this, new IllegalStateException("Dataset size mismatch: " + entries.length + " != " + existingEntries.size()));
       return false;
+    }
     for (Entry entry : entries)
-      if (!existingEntries.containsKey(entry.getId()) || !existingEntries.get(entry.getId()).equals(entry))
+      if (!entry.equals(existingEntries.get(entry.getId())))
         return false;
     return true;
   }

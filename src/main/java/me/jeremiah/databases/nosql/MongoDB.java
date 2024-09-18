@@ -61,10 +61,10 @@ public class MongoDB implements Database {
 
   @Override
   public void insert(Entry... entries) {
-    List<Document> documents = new ArrayList<>();
+    List<WriteModel<Document>> updates = new ArrayList<>();
     for (Entry entry : entries)
-      documents.add(entry.toDocument());
-    this.entries.insertMany(documents);
+      updates.add(new InsertOneModel<>(entry.toDocument()));
+    this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
   }
 
   @Override
