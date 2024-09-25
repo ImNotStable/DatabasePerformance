@@ -1,7 +1,6 @@
 package me.jeremiah.testing;
 
 import com.google.gson.JsonObject;
-import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
 import me.jeremiah.utils.FileUtils;
 import me.jeremiah.utils.TimeUtils;
@@ -27,14 +26,7 @@ public class TestCluster {
 
   public void start() {
     for (DatabaseTester databaseTester : testers) {
-      synchronized (this) {
         databaseTester.start();
-        try {
-          this.wait(2500);
-        } catch (InterruptedException exception) {
-          ExceptionManager.handleException(null, exception);
-        }
-      }
     }
     testers.stream()
       .sorted(Comparator.comparing(tester -> tester.getTimings().values().stream().mapToLong(TestTimings::getTotalTime).sum()))

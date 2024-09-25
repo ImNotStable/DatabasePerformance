@@ -26,7 +26,7 @@ public final class Main {
       new ByteOracleDB(),
       new MariaDB(),
       new PostgreSQL(),
-      new OracleDB(), // Sucks ass, doesn't store numbers 100% accurately (net_worth)
+      new OracleDB(),
       new MicrosoftSQL(),
       new MongoDB(),
       new Redis(),
