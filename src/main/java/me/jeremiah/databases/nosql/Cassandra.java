@@ -70,39 +70,19 @@ public class Cassandra implements Database {
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    for (int i = 0; i < entries.length; i += BATCH_SIZE) {
-      BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
-      PreparedStatement insertStmt = session.prepare("INSERT INTO data (id, bytes) VALUES (?, ?);");
-      for (int j = i; j < i + BATCH_SIZE && j < entries.length; j++) {
-        Entry entry = entries[j];
-        batchBuilder.addStatement(insertStmt.bind(entry.getId(), entry.bytes()));
-      }
-      session.execute(batchBuilder.build());
-    }
+    handleBatchAction("INSERT INTO data (id, bytes) VALUES (?, ?);", entries,
+      entry -> new Object[]{entry.getId(), entry.bytes()});
   }
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    for (int i = 0; i < entries.length; i += BATCH_SIZE) {
-      BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
-      PreparedStatement updateStmt = session.prepare("UPDATE data SET bytes = ? WHERE id = ?;");
-      for (int j = i; j < i + BATCH_SIZE && j < entries.length; j++) {
-        Entry entry = entries[j];
-        batchBuilder.addStatement(updateStmt.bind(entry.bytes(), entry.getId()));
-      }
-      session.execute(batchBuilder.build());
-    }
+    handleBatchAction("UPDATE data SET bytes = ? WHERE id = ?;", entries,
+      entry -> new Object[]{entry.bytes(), entry.getId()});
   }
 
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
-    for (int i = 0; i < ids.length; i += BATCH_SIZE) {
-      BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
-      PreparedStatement deleteStmt = session.prepare("DELETE FROM data WHERE id = ?;");
-      for (int j = i; j < i + BATCH_SIZE && j < ids.length; j++)
-        batchBuilder.addStatement(deleteStmt.bind(ids[j]));
-      session.execute(batchBuilder.build());
-    }
+    handleBatchAction("DELETE FROM data WHERE id = ?;", ids, id -> new Object[]{id});
   }
 
   @Override
@@ -124,6 +104,22 @@ public class Cassandra implements Database {
       entries.put(id, new Entry(id, bytes));
     }
     return entries;
+  }
+
+  private <W> void handleBatchAction(String statement, @NotNull W @NotNull [] writables, BatchAction<W> parser) {
+    for (int i = 0; i < writables.length; i += BATCH_SIZE) {
+      BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
+      PreparedStatement preparedStatement = session.prepare(statement);
+      for (int j = i; j < i + BATCH_SIZE && j < writables.length; j++)
+        batchBuilder.addStatement(preparedStatement.bind(parser.accept(writables[j])));
+      session.execute(batchBuilder.build());
+    }
+  }
+
+  private interface BatchAction<W> {
+
+    Object[] accept(W writable);
+
   }
 
   @Getter
