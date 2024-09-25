@@ -85,17 +85,17 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    handleBatch(getInsertEntryStatement(), entries, this::parseInsert);
+    handleBatchAction(getInsertEntryStatement(), entries, this::parseInsert);
   }
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    handleBatch(getUpdateEntryStatement(), entries, this::parseUpdate);
+    handleBatchAction(getUpdateEntryStatement(), entries, this::parseUpdate);
   }
 
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
-    handleBatch(getRemoveEntryStatement(), ids, this::parseRemove);
+    handleBatchAction(getRemoveEntryStatement(), ids, this::parseRemove);
   }
 
   @Override
@@ -136,7 +136,7 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
     }
   }
 
-  private <W> void handleBatch(String statement, @NotNull W @NotNull [] writables, SQLBatchAction<W> parser) {
+  private <W> void handleBatchAction(String statement, @NotNull W @NotNull [] writables, SQLBatchAction<W> parser) {
     handle(statement, preparedStatement -> {
       int count = 0;
       for (@NotNull W writable : writables) {
