@@ -28,7 +28,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.11.0'
 
     // Other
-    implementation 'com.google.guava:guava:33.3.0-jre'
+    implementation 'com.google.guava:guava:33.3.1-jre'
 
     // Annotations
     implementation 'org.projectlombok:lombok:1.18.34'
