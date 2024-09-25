@@ -7,65 +7,71 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+@Getter
 public class TestTimings {
 
-  private final ArrayList<Timing> operationTimings = new ArrayList<>();
+  private final ArrayList<Timing> rawTimings = new ArrayList<>();
 
   public void time() {
     time(null);
   }
 
   public void time(@Nullable DatabaseOperation nextOperation) {
-    if (!operationTimings.isEmpty() && !operationTimings.getLast().isComplete())
-      operationTimings.getLast().end();
+    if (!rawTimings.isEmpty() && !rawTimings.getLast().isComplete())
+      rawTimings.getLast().end();
     if (nextOperation != null)
-      operationTimings.add(new Timing(nextOperation).start());
+      rawTimings.add(new Timing(nextOperation).start());
   }
 
   public long getTotalTime() {
-    if (operationTimings.isEmpty() || !operationTimings.getLast().isComplete())
+    if (rawTimings.isEmpty() || !rawTimings.getLast().isComplete())
       throw new IllegalStateException("Cannot get total time before test is finished");
-    return operationTimings.getLast().getEnd() - operationTimings.getFirst().getStart();
+    return rawTimings.getLast().getEnd() - rawTimings.getFirst().getStart();
   }
 
-  public String getTimings() {
-    if (operationTimings.isEmpty() || operationTimings.getLast().isComplete())
-      throw new IllegalStateException("Cannot get timings before test is finished");
-    return TimeUtils.formatTime(getTotalTime())
-      + ", " +
-      String.join(", ", operationTimings.stream()
-        .map(Timing::getDuration)
-        .map(TimeUtils::formatTime)
-      .toArray(String[]::new)
-    );
+  public long getTotalTime(@Nullable DatabaseOperation operation) {
+    if (rawTimings.isEmpty() || !rawTimings.getLast().isComplete())
+      throw new IllegalStateException("Cannot get total time before test is finished");
+    List<Timing> timings = rawTimings.stream()
+      .filter(timing -> operation == null || timing.getOperation().equals(operation))
+      .toList();
+    return timings.getLast().getEnd() - timings.getFirst().getStart();
   }
 
-  public Map<String, String> getMappings() {
-    if (operationTimings.isEmpty() || !operationTimings.getLast().isComplete())
+  public Map<String, Long> getNumericalMappings() {
+    if (rawTimings.isEmpty() || !rawTimings.getLast().isComplete())
       throw new IllegalStateException("Cannot get mappings before test is finished");
-    Map<String, String> mappings = new LinkedHashMap<>();
+    Map<String, Long> mappings = new LinkedHashMap<>();
 
-    mappings.put("Total_Time", TimeUtils.formatTime(getTotalTime()));
+    mappings.put("Total_Time", getTotalTime());
 
     Map<DatabaseOperation, Integer> counts = new LinkedHashMap<>();
-    for (Timing timing : operationTimings) {
+    for (Timing timing : rawTimings) {
       if (counts.containsKey(timing.getOperation()))
-        mappings.put(timing.getOperation().getName() + "_" + counts.get(timing.getOperation()), TimeUtils.formatTime(timing.getDuration()));
+        mappings.put(timing.getOperation().getName() + "_" + counts.get(timing.getOperation()), timing.getDuration());
       else
-        mappings.put(timing.getOperation().getName(), TimeUtils.formatTime(timing.getDuration()));
+        mappings.put(timing.getOperation().getName(), timing.getDuration());
       counts.put(timing.getOperation(), counts.getOrDefault(timing.getOperation(), 0) + 1);
     }
 
     return mappings;
   }
 
+  public Map<String, String> getFormattedMappings() {
+    return getNumericalMappings()
+      .entrySet()
+      .stream().map(entry -> Map.entry(entry.getKey(), TimeUtils.formatTime(entry.getValue())))
+      .collect(LinkedHashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), LinkedHashMap::putAll);
+  }
+
   public JsonObject toJson() {
-    if (operationTimings.isEmpty() || operationTimings.getLast().isComplete())
+    if (rawTimings.isEmpty() || rawTimings.getLast().isComplete())
       throw new IllegalStateException("Cannot convert to JSON before test is finished");
     JsonObject json = new JsonObject();
-    getMappings().forEach(json::addProperty);
+    getFormattedMappings().forEach(json::addProperty);
     return json;
   }
 
@@ -86,10 +92,9 @@ public class TestTimings {
       return this;
     }
 
-    public Timing end() {
+    public void end() {
       end = System.nanoTime();
       System.out.println(operation.getEndMessage(TimeUtils.formatTime(getDuration())));
-      return this;
     }
 
     public boolean isComplete() {

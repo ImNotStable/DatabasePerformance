@@ -31,8 +31,8 @@ public class Redis implements Database {
       poolConfig.setMaxIdle(128);
       poolConfig.setMinIdle(16);
       jedisPool = new JedisPool(poolConfig, "localhost", 6379, 100000);
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -40,8 +40,8 @@ public class Redis implements Database {
   public void close() {
     try {
       jedisPool.close();
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -49,8 +49,8 @@ public class Redis implements Database {
   public void wipe() {
     try (Jedis jedis = jedisPool.getResource()) {
       jedis.flushAll();
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -61,8 +61,8 @@ public class Redis implements Database {
       for (Entry entry : entries)
         pipeline.set(Ints.toByteArray(entry.getId()), entry.bytes());
       pipeline.sync();
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -75,8 +75,8 @@ public class Redis implements Database {
   public boolean exists(int id) {
     try (Jedis jedis = jedisPool.getResource()) {
       return jedis.exists(Ints.toByteArray(id));
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
       return false;
     }
   }
@@ -90,8 +90,8 @@ public class Redis implements Database {
         rawIds[i] = Ints.toByteArray(ids[i]);
       pipeline.del(rawIds);
       pipeline.sync();
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -120,8 +120,8 @@ public class Redis implements Database {
         byte[] value = responses.get(i).get();
         entries.put(id, new Entry(id, value));
       }
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
     return entries;
   }

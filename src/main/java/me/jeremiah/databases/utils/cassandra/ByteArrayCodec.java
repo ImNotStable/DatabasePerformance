@@ -6,21 +6,17 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Bytes;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 
+@Getter
 public class ByteArrayCodec implements TypeCodec<byte[]> {
 
-  @Override
-  public @NotNull GenericType<byte[]> getJavaType() {
-    return GenericType.of(byte[].class);
-  }
+  private final GenericType<byte[]> javaType = GenericType.of(byte[].class);
+  private final DataType cqlType = TypeCodecs.BLOB.getCqlType();
 
-  @Override
-  public @NotNull DataType getCqlType() {
-    return TypeCodecs.BLOB.getCqlType();
-  }
 
   @Override
   public ByteBuffer encode(byte[] value, @NotNull ProtocolVersion protocolVersion) {

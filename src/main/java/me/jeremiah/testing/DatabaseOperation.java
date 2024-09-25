@@ -12,7 +12,6 @@ public enum DatabaseOperation {
   RETRIEVAL("Retrieval"),
   UPDATING("Update"),
   REMOVAL("Removal"),
-  REALISM("Realism"),
   END("End", "Ending Test", "Completed Test in %s");
 
   @Getter

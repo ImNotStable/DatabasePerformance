@@ -30,8 +30,8 @@ public class Entry {
       this.lastName = dis.readUTF();
       this.age = dis.readInt();
       this.netWorth = dis.readDouble();
-    } catch (IOException e) {
-      throw new RuntimeException("Error deserializing Entry from bytes", e);
+    } catch (IOException exception) {
+      throw new RuntimeException("Error deserializing Entry from bytes", exception);
     }
   }
 
@@ -77,8 +77,8 @@ public class Entry {
       dos.writeInt(age);
       dos.writeDouble(netWorth);
       return baos.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException("Error serializing Entry to bytes", e);
+    } catch (IOException exception) {
+      throw new RuntimeException("Error serializing Entry to bytes", exception);
     }
   }
 

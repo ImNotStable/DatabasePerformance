@@ -6,14 +6,16 @@ import me.jeremiah.databases.nosql.MongoDB;
 import me.jeremiah.databases.nosql.Neo4j;
 import me.jeremiah.databases.nosql.Redis;
 import me.jeremiah.databases.sql.*;
-import me.jeremiah.testing.DatabaseTester;
+import me.jeremiah.testing.TestCluster;
 
 import java.util.List;
 
 public final class Main {
 
   public static void main(String[] args) {
-    DatabaseTester.testCluster(getDatabaseStack(), 1_000, 10_000);
+    TestCluster cluster = TestCluster.test(getDatabaseStack(), 1_000, 10_000);
+    cluster.start();
+    cluster.createLog();
   }
 
   public static List<Database> getDatabaseStack() {
@@ -24,8 +26,7 @@ public final class Main {
       new ByteOracleDB(),
       new MariaDB(),
       new PostgreSQL(),
-      new CockroachDB(),
-      new OracleDB(), // Sucks ass, doesn't store numbers 100% accurately (networth)
+      new OracleDB(), // Sucks ass, doesn't store numbers 100% accurately (net_worth)
       new MicrosoftSQL(),
       new MongoDB(),
       new Redis(),

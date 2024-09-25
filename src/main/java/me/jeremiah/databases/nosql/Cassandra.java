@@ -106,8 +106,8 @@ public class Cassandra implements Database {
       AsyncResultSet resultSet = future.get();
       Row row = resultSet.one();
       return row != null && row.getLong(0) > 0;
-    } catch (InterruptedException | ExecutionException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (InterruptedException | ExecutionException exception) {
+      ExceptionManager.handleException(this, exception);
       return false;
     }
   }
@@ -142,8 +142,8 @@ public class Cassandra implements Database {
           break;
         resultSet = resultSet.fetchNextPage().toCompletableFuture().get();
       }
-    } catch (InterruptedException | ExecutionException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (InterruptedException | ExecutionException exception) {
+      ExceptionManager.handleException(this, exception);
     }
     return entries;
   }

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractSQLDatabase implements Database {
 
@@ -22,28 +23,36 @@ public abstract class AbstractSQLDatabase implements Database {
   private HikariDataSource dataSource;
 
   // Statement Schema
-  @Setter @Getter
+  @Setter
+  @Getter
   private String dropTable = "DROP TABLE entries";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String createTable = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String wipeTable = "DELETE FROM entries";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String insertEntry = "INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String updateEntry = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String entryExists = "SELECT * FROM entries WHERE id = ?";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String removeEntry = "DELETE FROM entries WHERE id = ?";
-  @Setter @Getter
+  @Setter
+  @Getter
   private String selectEntries = "SELECT * FROM entries";
 
   public AbstractSQLDatabase(Class<? extends Driver> driver, String url) {
     try {
       DriverManager.registerDriver(driver.getConstructor().newInstance());
-    } catch (Exception e) {
-      ExceptionManager.handleException(this, e);
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
     }
 
     config = new HikariConfig();
@@ -69,27 +78,23 @@ public abstract class AbstractSQLDatabase implements Database {
            Statement statement = connection.createStatement()) {
         createTable(connection, statement);
       }
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
   protected void createTable(Connection connection, Statement statement) {
     try {
-      System.out.println("Executing dropTable statement...");
       statement.execute(dropTable);
       connection.commit();
-      System.out.println("dropTable statement executed successfully.");
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
     }
     try {
-      System.out.println("Executing createTable statement...");
       statement.execute(createTable);
       connection.commit();
-      System.out.println("createTable statement executed successfully.");
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -107,15 +112,14 @@ public abstract class AbstractSQLDatabase implements Database {
          Statement statement = connection.createStatement()) {
       statement.execute(wipeTable);
       connection.commit();
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
     }
   }
 
   @Override
   public void insert(@NotNull Entry... entries) {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(insertEntry)) {
+    handle(insertEntry, preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
         parseInsert(entry, preparedStatement);
@@ -124,29 +128,12 @@ public abstract class AbstractSQLDatabase implements Database {
           preparedStatement.executeBatch();
       }
       preparedStatement.executeBatch();
-      connection.commit();
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
-  }
-
-  protected void parseInsert(Entry entry, PreparedStatement preparedStatement) {
-    try {
-      preparedStatement.setInt(1, entry.getId());
-      preparedStatement.setString(2, entry.getFirstName());
-      preparedStatement.setString(3, String.valueOf(entry.getMiddleInitial()));
-      preparedStatement.setString(4, entry.getLastName());
-      preparedStatement.setInt(5, entry.getAge());
-      preparedStatement.setDouble(6, entry.getNetWorth());
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
+    });
   }
 
   @Override
   public void update(@NotNull Entry... entries) {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(updateEntry)) {
+    handle(updateEntry, preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
         parseUpdate(entry, preparedStatement);
@@ -155,51 +142,24 @@ public abstract class AbstractSQLDatabase implements Database {
           preparedStatement.executeBatch();
       }
       preparedStatement.executeBatch();
-      connection.commit();
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
-  }
-
-  protected void parseUpdate(Entry entry, PreparedStatement preparedStatement) {
-    try {
-      preparedStatement.setString(1, entry.getFirstName());
-      preparedStatement.setString(2, String.valueOf(entry.getMiddleInitial()));
-      preparedStatement.setString(3, entry.getLastName());
-      preparedStatement.setInt(4, entry.getAge());
-      preparedStatement.setDouble(5, entry.getNetWorth());
-      preparedStatement.setInt(6, entry.getId());
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
+    });
   }
 
   @Override
   public boolean exists(int id) {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(entryExists)) {
+    AtomicBoolean exists = new AtomicBoolean(false);
+    handle(entryExists, preparedStatement -> {
       parseExists(id, preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        return resultSet.next();
+        exists.set(resultSet.next());
       }
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
-    return false;
-  }
-
-  protected void parseExists(int id, PreparedStatement preparedStatement) {
-    try {
-      preparedStatement.setInt(1, id);
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
+    });
+    return exists.get();
   }
 
   @Override
   public void remove(int... ids) {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(removeEntry)) {
+    handle(removeEntry, preparedStatement -> {
       int count = 0;
       for (int id : ids) {
         parseRemove(id, preparedStatement);
@@ -208,37 +168,59 @@ public abstract class AbstractSQLDatabase implements Database {
           preparedStatement.executeBatch();
       }
       preparedStatement.executeBatch();
-      connection.commit();
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
-  }
-
-  protected void parseRemove(int id, PreparedStatement preparedStatement) {
-    try {
-      preparedStatement.setInt(1, id);
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
+    });
   }
 
   @Override
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
 
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(selectEntries)) {
-
+    handle(selectEntries, preparedStatement -> {
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         while (resultSet.next()) {
           int id = resultSet.getInt("id");
           entries.put(id, deserializeEntry(id, resultSet));
         }
       }
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
-    }
+    });
+
     return entries;
+  }
+
+  protected void parseInsert(Entry entry, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setInt(1, entry.getId());
+    preparedStatement.setString(2, entry.getFirstName());
+    preparedStatement.setString(3, String.valueOf(entry.getMiddleInitial()));
+    preparedStatement.setString(4, entry.getLastName());
+    preparedStatement.setInt(5, entry.getAge());
+    preparedStatement.setDouble(6, entry.getNetWorth());
+  }
+
+  protected void parseUpdate(Entry entry, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setString(1, entry.getFirstName());
+    preparedStatement.setString(2, String.valueOf(entry.getMiddleInitial()));
+    preparedStatement.setString(3, entry.getLastName());
+    preparedStatement.setInt(4, entry.getAge());
+    preparedStatement.setDouble(5, entry.getNetWorth());
+    preparedStatement.setInt(6, entry.getId());
+  }
+
+  protected void parseExists(int id, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setInt(1, id);
+  }
+
+  protected void parseRemove(int id, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setInt(1, id);
+  }
+
+  private void handle(String statement, SQLAction action) {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
+      action.accept(preparedStatement);
+      connection.commit();
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
+    }
   }
 
   protected Entry deserializeEntry(int id, ResultSet resultSet) {
@@ -251,10 +233,16 @@ public abstract class AbstractSQLDatabase implements Database {
         resultSet.getInt("age"),
         resultSet.getDouble("net_worth")
       );
-    } catch (SQLException e) {
-      ExceptionManager.handleException(this, e);
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
     }
     return null;
+  }
+
+  private interface SQLAction {
+
+    void accept(PreparedStatement preparedStatement) throws SQLException;
+
   }
 
 }
