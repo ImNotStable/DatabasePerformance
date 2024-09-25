@@ -17,6 +17,10 @@ public class FileUtils {
     return createFile(Paths.get(rawPath));
   }
 
+  public static boolean createFile(File file) {
+    return createFile(file.toPath());
+  }
+
   public static boolean createFile(Path path) {
     try {
       Files.createDirectories(path.getParent());

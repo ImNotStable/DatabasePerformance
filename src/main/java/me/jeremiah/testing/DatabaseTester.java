@@ -3,12 +3,12 @@ package me.jeremiah.testing;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import me.jeremiah.Entry;
+import me.jeremiah.Main;
 import me.jeremiah.databases.Database;
 import me.jeremiah.utils.FileUtils;
 import me.jeremiah.utils.TimeUtils;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,14 +45,18 @@ public class DatabaseTester {
   }
 
   public void start() {
-    System.out.println("Starting Database Test for " + database.getName() + " [" + Arrays.stream(entryAmounts).mapToObj(String::valueOf).collect(Collectors.joining(", ")) + "]");
+    System.out.printf("Starting Database Test for %s [%s]%n",
+      database.getName(),
+      Arrays.stream(entryAmounts).mapToObj(String::valueOf).collect(Collectors.joining(", "))
+    );
+
     generateEntries();
 
-    System.out.println("Initializing " + database.getName());
+    System.out.printf("Initializing %s%n", database.getName());
     database.open();
     for (int currentEntryAmount : entryAmounts) {
       verificationIndex = 0;
-      System.out.println("Testing " + database.getName() + " for " + currentEntryAmount + " Entries");
+      System.out.printf("Testing %s for %d Entries%n", database.getName(), currentEntryAmount);
       database.wipe();
       currentTimings = new TestTimings();
       runInsertionTest(currentEntryAmount);
@@ -118,7 +122,7 @@ public class DatabaseTester {
   public Map<String, Map<String, String>> getTimeMappings() {
     return timings.entrySet().stream()
       .collect(Collectors.toMap(
-        entry -> entry.getKey().toString() + " Entries",
+        entry -> entry.getKey() + " Entries",
         entry -> entry.getValue().getFormattedMappings().entrySet().stream()
           .collect(Collectors.toMap(
             Map.Entry::getKey,
@@ -146,9 +150,9 @@ public class DatabaseTester {
   }
 
   public void createLog() {
-    Path logFilePath = Paths.get("P:/IntelliJProjects/DatabasePerformance/.logs/" + database.getName() + "-" + TimeUtils.getDateTime() + ".json");
-    FileUtils.createFile(logFilePath);
-    FileUtils.saveJsonToFile(logFilePath, toJson());
+    File logFile = new File(Main.getLogDir(), String.format("%s-%s.json", database.getName(), TimeUtils.getDateTime()));
+    FileUtils.createFile(logFile);
+    FileUtils.saveJsonToFile(logFile, toJson());
   }
 
   public boolean verified() {

@@ -1,12 +1,12 @@
 package me.jeremiah.testing;
 
 import com.google.gson.JsonObject;
+import me.jeremiah.Main;
 import me.jeremiah.databases.Database;
 import me.jeremiah.utils.FileUtils;
 import me.jeremiah.utils.TimeUtils;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -51,9 +51,9 @@ public class TestCluster {
   }
 
   public void createLog() {
-    Path logFilePath = Paths.get("P:/IntelliJProjects/DatabasePerformance/.logs/test-cluster-" + TimeUtils.getDateTime() + ".json");
-    FileUtils.createFile(logFilePath);
-    FileUtils.saveJsonToFile(logFilePath, toJson());
+    File logFile = new File(Main.getLogDir(), String.format("test-cluster-%s.json", TimeUtils.getDateTime()));
+    FileUtils.createFile(logFile);
+    FileUtils.saveJsonToFile(logFile, toJson());
   }
 
 }
