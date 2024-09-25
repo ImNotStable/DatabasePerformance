@@ -25,14 +25,14 @@ public class ByteMariaDB extends MariaDB {
 
   @Override
   protected void parseInsert(Entry entry, PreparedStatement preparedStatement) throws SQLException {
-      preparedStatement.setInt(1, entry.getId());
-      preparedStatement.setBytes(2, entry.bytes());
+    preparedStatement.setInt(1, entry.getId());
+    preparedStatement.setBytes(2, entry.bytes());
   }
 
   @Override
   protected void parseUpdate(Entry entry, PreparedStatement preparedStatement) throws SQLException {
-      preparedStatement.setBytes(1, entry.bytes());
-      preparedStatement.setInt(2, entry.getId());
+    preparedStatement.setBytes(1, entry.bytes());
+    preparedStatement.setInt(2, entry.getId());
   }
 
   @Override

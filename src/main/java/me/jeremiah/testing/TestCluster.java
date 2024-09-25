@@ -25,9 +25,8 @@ public class TestCluster {
   }
 
   public void start() {
-    for (DatabaseTester databaseTester : testers) {
-        databaseTester.start();
-    }
+    for (DatabaseTester databaseTester : testers)
+      databaseTester.start();
     testers.stream()
       .sorted(Comparator.comparing(tester -> tester.getTimings().values().stream().mapToLong(TestTimings::getTotalTime).sum()))
       .forEach(tester ->

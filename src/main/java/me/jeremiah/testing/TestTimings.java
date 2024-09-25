@@ -5,7 +5,10 @@ import lombok.Getter;
 import me.jeremiah.utils.TimeUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 public class TestTimings {

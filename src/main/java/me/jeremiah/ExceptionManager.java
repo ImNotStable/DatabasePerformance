@@ -33,6 +33,7 @@ public class ExceptionManager {
   }
 
 
-  public record LoggedException(@Nullable Database database, @NotNull Exception exception) {}
+  public record LoggedException(@Nullable Database database, @NotNull Exception exception) {
+  }
 
 }
