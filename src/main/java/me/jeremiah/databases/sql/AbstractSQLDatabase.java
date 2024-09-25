@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class AbstractSQLDatabase extends SQLStatementHandler implements Database {
 
@@ -98,10 +99,9 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
 
   @Override
   public boolean exists(int id) {
-    return Boolean.TRUE.equals(handleQuery(getEntryExistsStatement(),
+    return handleQuery(getEntryExistsStatement(),
       preparedStatement -> parseExists(id, preparedStatement),
-      ResultSet::next
-    ));
+      ResultSet::next).orElse(false);
   }
 
   @Override
@@ -113,7 +113,7 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
         entries.put(id, deserializeEntry(id, resultSet));
       }
       return entries;
-    });
+    }).orElseGet(HashMap::new);
   }
 
   private void handle(String statement) {
@@ -143,21 +143,20 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     });
   }
 
-  private <R> R handleQuery(String statement, SQLQuery<R> query) {
-    return handleQuery(statement, null, query);
+  private <R> Optional<R> handleQuery(String statement, SQLQuery<R> query) {
+    return handleQuery(statement, _ -> {}, query);
   }
 
-  private <R> R handleQuery(String statement, SQLAction action, SQLQuery<R> query) {
+  private <R> Optional<R> handleQuery(String statement, SQLAction action, SQLQuery<R> query) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
-      if (action != null)
-        action.accept(preparedStatement);
+      action.accept(preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        return query.apply(resultSet);
+        return Optional.ofNullable(query.apply(resultSet));
       }
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
-      return null;
+      return Optional.empty();
     }
   }
 
