@@ -7,6 +7,7 @@ import me.jeremiah.Entry;
 import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -100,12 +101,10 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
   @Override
   public boolean exists(int id) {
     AtomicBoolean exists = new AtomicBoolean(false);
-    handleQuery(getEntryExistsStatement(), preparedStatement -> {
-      parseExists(id, preparedStatement);
-      try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        exists.set(resultSet.next());
-      }
-    });
+    handleQuery(getEntryExistsStatement(),
+      preparedStatement -> parseExists(id, preparedStatement),
+      resultSet -> exists.set(resultSet.next())
+    );
     return exists.get();
   }
 
@@ -113,12 +112,10 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
 
-    handleQuery(getSelectEntriesStatement(), preparedStatement -> {
-      try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        while (resultSet.next()) {
-          int id = resultSet.getInt("id");
-          entries.put(id, deserializeEntry(id, resultSet));
-        }
+    handleQuery(getSelectEntriesStatement(), resultSet -> {
+      while (resultSet.next()) {
+        int id = resultSet.getInt("id");
+        entries.put(id, deserializeEntry(id, resultSet));
       }
     });
 
@@ -152,10 +149,18 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
     });
   }
 
-  private void handleQuery(String statement, SQLAction action) {
+  private void handleQuery(String statement, SQLQuery query) {
+    handleQuery(statement, null, query);
+  }
+
+  private void handleQuery(String statement, @Nullable SQLAction action, @NotNull SQLQuery query) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
-      action.accept(preparedStatement);
+      if (action != null)
+        action.accept(preparedStatement);
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        query.accept(resultSet);
+      }
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
@@ -174,6 +179,12 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
   private interface SQLAction {
 
     void accept(PreparedStatement preparedStatement) throws SQLException;
+
+  }
+
+  private interface SQLQuery {
+
+    void accept(ResultSet resultSet) throws SQLException;
 
   }
 
