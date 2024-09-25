@@ -84,44 +84,17 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    handle(getInsertEntryStatement(), preparedStatement -> {
-      int count = 0;
-      for (Entry entry : entries) {
-        parseInsert(entry, preparedStatement);
-        preparedStatement.addBatch();
-        if (++count % MAX_BATCH_SIZE == 0)
-          preparedStatement.executeBatch();
-      }
-      preparedStatement.executeBatch();
-    });
+    handleBatch(getInsertEntryStatement(), entries, this::parseInsert);
   }
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    handle(getUpdateEntryStatement(), preparedStatement -> {
-      int count = 0;
-      for (Entry entry : entries) {
-        parseUpdate(entry, preparedStatement);
-        preparedStatement.addBatch();
-        if (++count % MAX_BATCH_SIZE == 0)
-          preparedStatement.executeBatch();
-      }
-      preparedStatement.executeBatch();
-    });
+    handleBatch(getUpdateEntryStatement(), entries, this::parseUpdate);
   }
 
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
-    handle(getRemoveEntryStatement(), preparedStatement -> {
-      int count = 0;
-      for (int id : ids) {
-        parseRemove(id, preparedStatement);
-        preparedStatement.addBatch();
-        if (++count % MAX_BATCH_SIZE == 0)
-          preparedStatement.executeBatch();
-      }
-      preparedStatement.executeBatch();
-    });
+    handleBatch(getRemoveEntryStatement(), ids, this::parseRemove);
   }
 
   @Override
@@ -166,6 +139,19 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
     }
   }
 
+  private <W> void handleBatch(String statement, @NotNull W @NotNull [] writables, SQLBatchAction<W> parser) {
+    handle(statement, preparedStatement -> {
+      int count = 0;
+      for (@NotNull W writable : writables) {
+        parser.accept(writable, preparedStatement);
+        preparedStatement.addBatch();
+        if (++count % MAX_BATCH_SIZE == 0)
+          preparedStatement.executeBatch();
+      }
+      preparedStatement.executeBatch();
+    });
+  }
+
   private void handleQuery(String statement, SQLAction action) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
@@ -188,6 +174,12 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
   private interface SQLAction {
 
     void accept(PreparedStatement preparedStatement) throws SQLException;
+
+  }
+
+  private interface SQLBatchAction<W> {
+
+    void accept(W writable, PreparedStatement preparedStatement) throws SQLException;
 
   }
 

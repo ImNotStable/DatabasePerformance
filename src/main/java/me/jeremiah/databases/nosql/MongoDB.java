@@ -76,9 +76,9 @@ public class MongoDB implements Database {
     bulkWrite(ids, writable -> new DeleteOneModel<>(new Document("id", writable)));
   }
   
-  private <E> void bulkWrite(@NotNull E @NotNull [] writables, Function<E, WriteModel<Document>> converter) {
+  private <W> void bulkWrite(@NotNull W @NotNull [] writables, Function<W, WriteModel<Document>> converter) {
     List<WriteModel<Document>> updates = new ArrayList<>();
-    for (E writable : writables)
+    for (W writable : writables)
       updates.add(converter.apply(writable));
     this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
   }
