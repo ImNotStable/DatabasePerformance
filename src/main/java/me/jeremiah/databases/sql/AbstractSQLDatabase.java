@@ -76,6 +76,7 @@ public abstract class AbstractSQLDatabase implements Database {
       dataSource = new HikariDataSource(config);
       try (Connection connection = dataSource.getConnection();
            Statement statement = connection.createStatement()) {
+        dropTable(connection, statement);
         createTable(connection, statement);
       }
     } catch (SQLException exception) {
@@ -85,13 +86,16 @@ public abstract class AbstractSQLDatabase implements Database {
 
   protected void createTable(Connection connection, Statement statement) {
     try {
-      statement.execute(dropTable);
+      statement.execute(createTable);
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
+  }
+
+  protected void dropTable(Connection connection, Statement statement) {
     try {
-      statement.execute(createTable);
+      statement.execute(dropTable);
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
