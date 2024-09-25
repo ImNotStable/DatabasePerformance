@@ -19,6 +19,10 @@ public final class Main {
     TestCluster cluster = TestCluster.test(getDatabaseStack(), 1_000, 10_000);
     cluster.start();
     cluster.createLog();
+
+    int exceptions = ExceptionManager.collectLoggedExceptions().size();
+    if (exceptions > 0)
+      System.out.printf("Handled Exceptions: %d%n", exceptions);
   }
 
   public static List<Database> getDatabaseStack() {
