@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class MongoDB implements Database {
 
@@ -62,18 +63,12 @@ public class MongoDB implements Database {
 
   @Override
   public void insert(Entry @NotNull ... entries) {
-    List<WriteModel<Document>> updates = new ArrayList<>();
-    for (Entry entry : entries)
-      updates.add(new InsertOneModel<>(entry.toDocument()));
-    this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
+    bulkWrite(entries, entry -> new InsertOneModel<>(entry.toDocument()));
   }
 
   @Override
   public void update(Entry @NotNull ... entries) {
-    List<WriteModel<Document>> updates = new ArrayList<>();
-    for (Entry entry : entries)
-      updates.add(new UpdateOneModel<>(new Document("id", entry.getId()), new Document("$set", entry.toDocument())));
-    this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
+    bulkWrite(entries, entry -> new UpdateOneModel<>(new Document("id", entry.getId()), new Document("$set", entry.toDocument())));
   }
 
   public boolean exists(int id) {
@@ -81,11 +76,15 @@ public class MongoDB implements Database {
   }
 
   @Override
-  public void remove(int... ids) {
-    List<WriteModel<Document>> deletes = new ArrayList<>();
-    for (int id : ids)
-      deletes.add(new DeleteOneModel<>(new Document("id", id)));
-    this.entries.bulkWrite(deletes, new BulkWriteOptions().ordered(false));
+  public void remove(@NotNull Integer @NotNull ... ids) {
+    bulkWrite(ids, id -> new DeleteOneModel<>(new Document("id", id)));
+  }
+  
+  private <E> void bulkWrite(@NotNull E @NotNull [] entries, Function<E, WriteModel<Document>> converter) {
+    List<WriteModel<Document>> updates = new ArrayList<>();
+    for (E entry : entries)
+      updates.add(converter.apply(entry));
+    this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
   }
 
   @Override
