@@ -5,10 +5,7 @@ import lombok.Getter;
 import me.jeremiah.utils.TimeUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 public class TestTimings {
@@ -49,12 +46,19 @@ public class TestTimings {
     mappings.put("Total_Time", getTotalTime());
 
     Map<DatabaseOperation, Integer> counts = new LinkedHashMap<>();
+    for (Timing timing : rawTimings)
+      if (rawTimings.stream().filter(timing1 -> timing1.getOperation().equals(timing.getOperation())).count() > 1)
+        counts.put(timing.getOperation(), 0);
+
     for (Timing timing : rawTimings) {
-      if (counts.containsKey(timing.getOperation()))
-        mappings.put(timing.getOperation().getName() + "_" + counts.get(timing.getOperation()), timing.getDuration());
-      else
+      if (counts.containsKey(timing.getOperation())) {
+        counts.computeIfPresent(timing.getOperation(), (_, count) -> count + 1);
+        mappings.put(
+          String.format("%s_%d", timing.getOperation().getName(), counts.get(timing.getOperation())),
+          timing.getDuration()
+        );
+      } else
         mappings.put(timing.getOperation().getName(), timing.getDuration());
-      counts.put(timing.getOperation(), counts.getOrDefault(timing.getOperation(), 0) + 1);
     }
 
     return mappings;
