@@ -59,7 +59,7 @@ public class TestCluster {
   }
 
   public void createLog() {
-    Path logFilePath = Paths.get("P:/IntelliJProjects/DatabasePerformance/logs/test-cluster-" + TimeUtils.getDateTime() + ".json");
+    Path logFilePath = Paths.get("P:/IntelliJProjects/DatabasePerformance/.logs/test-cluster-" + TimeUtils.getDateTime() + ".json");
     FileUtils.createFile(logFilePath);
     FileUtils.saveJsonToFile(logFilePath, toJson());
   }

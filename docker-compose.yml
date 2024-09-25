@@ -9,7 +9,7 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/mariadb:/var/lib/mysql
+      - P:/IntelliJProjects/DatabasePerformance/.databases/mariadb:/var/lib/mysql
 
   postgresql:
     image: postgres:latest
@@ -20,7 +20,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/postgresql:/var/lib/postgresql/data
+      - P:/IntelliJProjects/DatabasePerformance/.databases/postgresql:/var/lib/postgresql/data
 
   oracle:
     image: gvenzl/oracle-free:latest
@@ -31,7 +31,7 @@ services:
     ports:
       - "1521:1521"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/oracle:/opt/oracle/oradata
+      - P:/IntelliJProjects/DatabasePerformance/.databases/oracle:/opt/oracle/oradata
 
   microsoft-sql:
     image: mcr.microsoft.com/mssql/server:latest
@@ -42,7 +42,7 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/microsoft-sql:/var/opt/data
+      - P:/IntelliJProjects/DatabasePerformance/.databases/microsoft-sql:/var/opt/mssql/data
     expose:
       - "1433"
 
@@ -55,7 +55,7 @@ services:
     ports:
       - "26257:26257"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/cockroachdb:/cockroach/cockroach-data
+      - P:/IntelliJProjects/DatabasePerformance/.databases/cockroachdb:/cockroach/cockroach-data
 
   mongodb:
     image: mongo:latest
@@ -65,7 +65,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/mongodb:/data/db
+      - P:/IntelliJProjects/DatabasePerformance/.databases/mongodb:/data/db
 
   redis:
     image: redis:latest
@@ -73,7 +73,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-        - P:/IntelliJProjects/DatabasePerformance/databases/redis:/data
+        - P:/IntelliJProjects/DatabasePerformance/.databases/redis:/data
 
   neo4j:
     image: neo4j:latest
@@ -83,7 +83,7 @@ services:
     ports:
       - "7687:7687"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/neo4j:/data
+      - P:/IntelliJProjects/DatabasePerformance/.databases/neo4j:/data
 
   cassandra:
     image: cassandra:latest
@@ -91,4 +91,4 @@ services:
     ports:
       - "9042:9042"
     volumes:
-      - P:/IntelliJProjects/DatabasePerformance/databases/cassandra:/var/lib/cassandra
+      - P:/IntelliJProjects/DatabasePerformance/.databases/cassandra:/var/lib/cassandra
