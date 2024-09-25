@@ -13,7 +13,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler implements Database {
+public abstract class AbstractSQLDatabase extends SQLStatementHandler implements Database {
 
   private static final int MAX_BATCH_SIZE = 1000;
 
@@ -79,7 +79,7 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   @Override
   public void wipe() {
-    handle(getTableWipeStatemtn());
+    handle(getTableWipeStatement());
   }
 
   @Override
@@ -160,16 +160,6 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
       ExceptionManager.handleException(this, exception);
       return null;
     }
-  }
-
-  protected Entry deserializeEntry(int id, ResultSet resultSet) throws SQLException {
-    return new Entry(id,
-      resultSet.getString("first_name"),
-      resultSet.getString("middle_initial").charAt(0),
-      resultSet.getString("last_name"),
-      resultSet.getInt("age"),
-      resultSet.getDouble("net_worth")
-    );
   }
 
   private interface SQLAction {

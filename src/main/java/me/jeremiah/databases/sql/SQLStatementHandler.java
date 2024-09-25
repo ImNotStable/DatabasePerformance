@@ -5,15 +5,16 @@ import lombok.Setter;
 import me.jeremiah.Entry;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @Setter
 @Getter
-public sealed class SQLStatementHandler permits AbstractSQLDatabase {
+class SQLStatementHandler {
 
   private String dropTableStatement = "DROP TABLE entries";
   private String createTableStatement = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
-  private String tableWipeStatemtn = "DELETE FROM entries";
+  private String tableWipeStatement = "DELETE FROM entries";
   private String insertEntryStatement = "INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)";
   private String updateEntryStatement = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
   private String removeEntryStatement = "DELETE FROM entries WHERE id = ?";
@@ -44,6 +45,16 @@ public sealed class SQLStatementHandler permits AbstractSQLDatabase {
 
   protected void parseExists(int id, PreparedStatement preparedStatement) throws SQLException {
     preparedStatement.setInt(1, id);
+  }
+
+  protected Entry deserializeEntry(int id, ResultSet resultSet) throws SQLException {
+    return new Entry(id,
+      resultSet.getString("first_name"),
+      resultSet.getString("middle_initial").charAt(0),
+      resultSet.getString("last_name"),
+      resultSet.getInt("age"),
+      resultSet.getDouble("net_worth")
+    );
   }
 
 }
