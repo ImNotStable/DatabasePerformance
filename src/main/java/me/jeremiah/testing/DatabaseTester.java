@@ -55,14 +55,16 @@ public class DatabaseTester {
     System.out.printf("Initializing %s%n", database.getName());
     database.open();
     for (int currentEntryAmount : entryAmounts) {
-      verificationIndex = 0;
       System.out.printf("Testing %s for %d Entries%n", database.getName(), currentEntryAmount);
-      database.wipe();
+
+      verificationIndex = 0;
+      int tenPercent = (int) (currentEntryAmount * 0.1);
       currentTimings = new TestTimings();
+
+      database.wipe();
       runInsertionTest(currentEntryAmount);
       runVerificationTest(0, currentEntryAmount);
       runRetrievalTest();
-      int tenPercent = (int) (currentEntryAmount * 0.1);
       runUpdatingTest(tenPercent);
       runVerificationTest(0, currentEntryAmount);
       runRemovalTest(tenPercent);
@@ -100,12 +102,6 @@ public class DatabaseTester {
   private void runRemovalTest(int entryAmount) {
     currentTimings.time(DatabaseOperation.REMOVAL);
     database.remove(Arrays.copyOf(entries, entryAmount));
-  }
-
-  private void runExistenceTest() {
-    currentTimings.time(DatabaseOperation.EXISTENCE);
-    for (Entry entry : entries)
-      database.exists(entry);
   }
 
   private void runRetrievalTest() {
