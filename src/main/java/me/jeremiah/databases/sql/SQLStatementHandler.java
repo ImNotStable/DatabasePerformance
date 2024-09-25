@@ -1,0 +1,49 @@
+package me.jeremiah.databases.sql;
+
+import lombok.Getter;
+import lombok.Setter;
+import me.jeremiah.Entry;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+@Setter
+@Getter
+public sealed class SQLStatementHandler permits AbstractSQLDatabase {
+
+  private String dropTable = "DROP TABLE entries";
+  private String createTable = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
+  private String wipeTable = "DELETE FROM entries";
+  private String insertEntry = "INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)";
+  private String updateEntry = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
+  private String removeEntry = "DELETE FROM entries WHERE id = ?";
+  private String entryExists = "SELECT * FROM entries WHERE id = ?";
+  private String selectEntries = "SELECT * FROM entries";
+
+  protected void parseInsert(Entry entry, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setInt(1, entry.getId());
+    preparedStatement.setString(2, entry.getFirstName());
+    preparedStatement.setString(3, String.valueOf(entry.getMiddleInitial()));
+    preparedStatement.setString(4, entry.getLastName());
+    preparedStatement.setInt(5, entry.getAge());
+    preparedStatement.setDouble(6, entry.getNetWorth());
+  }
+
+  protected void parseUpdate(Entry entry, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setString(1, entry.getFirstName());
+    preparedStatement.setString(2, String.valueOf(entry.getMiddleInitial()));
+    preparedStatement.setString(3, entry.getLastName());
+    preparedStatement.setInt(4, entry.getAge());
+    preparedStatement.setDouble(5, entry.getNetWorth());
+    preparedStatement.setInt(6, entry.getId());
+  }
+
+  protected void parseRemove(int id, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setInt(1, id);
+  }
+
+  protected void parseExists(int id, PreparedStatement preparedStatement) throws SQLException {
+    preparedStatement.setInt(1, id);
+  }
+
+}

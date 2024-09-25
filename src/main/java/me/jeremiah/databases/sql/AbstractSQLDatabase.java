@@ -3,7 +3,6 @@ package me.jeremiah.databases.sql;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
-import lombok.Setter;
 import me.jeremiah.Entry;
 import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
@@ -14,39 +13,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class AbstractSQLDatabase implements Database {
+public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler implements Database {
 
   private static final int MAX_BATCH_SIZE = 1000;
 
   @Getter
   private final HikariConfig config;
   private HikariDataSource dataSource;
-
-  // Statement Schema
-  @Setter
-  @Getter
-  private String dropTable = "DROP TABLE entries";
-  @Setter
-  @Getter
-  private String createTable = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
-  @Setter
-  @Getter
-  private String wipeTable = "DELETE FROM entries";
-  @Setter
-  @Getter
-  private String insertEntry = "INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)";
-  @Setter
-  @Getter
-  private String updateEntry = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
-  @Setter
-  @Getter
-  private String removeEntry = "DELETE FROM entries WHERE id = ?";
-  @Setter
-  @Getter
-  private String entryExists = "SELECT * FROM entries WHERE id = ?";
-  @Setter
-  @Getter
-  private String selectEntries = "SELECT * FROM entries";
 
   public AbstractSQLDatabase(Class<? extends Driver> driver, String url) {
     try {
@@ -83,13 +56,13 @@ public abstract class AbstractSQLDatabase implements Database {
 
   protected void reloadTable(Connection connection, Statement statement) {
     try {
-      statement.execute(dropTable);
+      statement.execute(getDropTable());
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
     try {
-      statement.execute(createTable);
+      statement.execute(getCreateTable());
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
@@ -106,12 +79,12 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void wipe() {
-    handle(wipeTable);
+    handle(getWipeTable());
   }
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    handle(insertEntry, preparedStatement -> {
+    handle(getInsertEntry(), preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
         parseInsert(entry, preparedStatement);
@@ -125,7 +98,7 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    handle(updateEntry, preparedStatement -> {
+    handle(getUpdateEntry(), preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
         parseUpdate(entry, preparedStatement);
@@ -139,7 +112,7 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
-    handle(removeEntry, preparedStatement -> {
+    handle(getRemoveEntry(), preparedStatement -> {
       int count = 0;
       for (int id : ids) {
         parseRemove(id, preparedStatement);
@@ -154,7 +127,7 @@ public abstract class AbstractSQLDatabase implements Database {
   @Override
   public boolean exists(int id) {
     AtomicBoolean exists = new AtomicBoolean(false);
-    handleQuery(entryExists, preparedStatement -> {
+    handleQuery(getEntryExists(), preparedStatement -> {
       parseExists(id, preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         exists.set(resultSet.next());
@@ -167,7 +140,7 @@ public abstract class AbstractSQLDatabase implements Database {
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
 
-    handleQuery(selectEntries, preparedStatement -> {
+    handleQuery(getSelectEntries(), preparedStatement -> {
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         while (resultSet.next()) {
           int id = resultSet.getInt("id");
@@ -177,31 +150,6 @@ public abstract class AbstractSQLDatabase implements Database {
     });
 
     return entries;
-  }
-  protected void parseInsert(Entry entry, PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.setInt(1, entry.getId());
-    preparedStatement.setString(2, entry.getFirstName());
-    preparedStatement.setString(3, String.valueOf(entry.getMiddleInitial()));
-    preparedStatement.setString(4, entry.getLastName());
-    preparedStatement.setInt(5, entry.getAge());
-    preparedStatement.setDouble(6, entry.getNetWorth());
-  }
-
-  protected void parseUpdate(Entry entry, PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.setString(1, entry.getFirstName());
-    preparedStatement.setString(2, String.valueOf(entry.getMiddleInitial()));
-    preparedStatement.setString(3, entry.getLastName());
-    preparedStatement.setInt(4, entry.getAge());
-    preparedStatement.setDouble(5, entry.getNetWorth());
-    preparedStatement.setInt(6, entry.getId());
-  }
-
-  protected void parseRemove(int id, PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.setInt(1, id);
-  }
-
-  protected void parseExists(int id, PreparedStatement preparedStatement) throws SQLException {
-    preparedStatement.setInt(1, id);
   }
 
   private void handle(String statement) {
@@ -227,19 +175,14 @@ public abstract class AbstractSQLDatabase implements Database {
     }
   }
 
-  protected Entry deserializeEntry(int id, ResultSet resultSet) {
-    try {
-      return new Entry(id,
-        resultSet.getString("first_name"),
-        resultSet.getString("middle_initial").charAt(0),
-        resultSet.getString("last_name"),
-        resultSet.getInt("age"),
-        resultSet.getDouble("net_worth")
-      );
-    } catch (SQLException exception) {
-      ExceptionManager.handleException(this, exception);
-      return null;
-    }
+  protected Entry deserializeEntry(int id, ResultSet resultSet) throws SQLException {
+    return new Entry(id,
+      resultSet.getString("first_name"),
+      resultSet.getString("middle_initial").charAt(0),
+      resultSet.getString("last_name"),
+      resultSet.getInt("age"),
+      resultSet.getDouble("net_worth")
+    );
   }
 
   private interface SQLAction {
