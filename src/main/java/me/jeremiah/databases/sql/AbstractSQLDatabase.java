@@ -72,30 +72,24 @@ public abstract class AbstractSQLDatabase implements Database {
   public void open() {
     if (dataSource != null)
       throw new IllegalStateException("Database is already open");
-    try {
-      dataSource = new HikariDataSource(config);
-      try (Connection connection = dataSource.getConnection();
-           Statement statement = connection.createStatement()) {
-        dropTable(connection, statement);
-        createTable(connection, statement);
-      }
+    dataSource = new HikariDataSource(config);
+    try (Connection connection = dataSource.getConnection();
+         Statement statement = connection.createStatement()) {
+      reloadTable(connection, statement);
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
   }
 
-  protected void createTable(Connection connection, Statement statement) {
+  protected void reloadTable(Connection connection, Statement statement) {
     try {
-      statement.execute(createTable);
+      statement.execute(dropTable);
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
-  }
-
-  protected void dropTable(Connection connection, Statement statement) {
     try {
-      statement.execute(dropTable);
+      statement.execute(createTable);
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
@@ -112,13 +106,7 @@ public abstract class AbstractSQLDatabase implements Database {
 
   @Override
   public void wipe() {
-    try (Connection connection = dataSource.getConnection();
-         Statement statement = connection.createStatement()) {
-      statement.execute(wipeTable);
-      connection.commit();
-    } catch (SQLException exception) {
-      ExceptionManager.handleException(this, exception);
-    }
+    handle(wipeTable);
   }
 
   @Override
@@ -190,7 +178,6 @@ public abstract class AbstractSQLDatabase implements Database {
 
     return entries;
   }
-
   protected void parseInsert(Entry entry, PreparedStatement preparedStatement) throws SQLException {
     preparedStatement.setInt(1, entry.getId());
     preparedStatement.setString(2, entry.getFirstName());
@@ -215,6 +202,10 @@ public abstract class AbstractSQLDatabase implements Database {
 
   protected void parseRemove(int id, PreparedStatement preparedStatement) throws SQLException {
     preparedStatement.setInt(1, id);
+  }
+
+  private void handle(String statement) {
+    handle(statement, _ -> {});
   }
 
   private void handle(String statement, SQLAction action) {
