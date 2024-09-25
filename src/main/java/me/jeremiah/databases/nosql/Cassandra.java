@@ -2,17 +2,24 @@ package me.jeremiah.databases.nosql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
 import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.shaded.guava.common.primitives.Bytes;
+import lombok.Getter;
 import me.jeremiah.Entry;
 import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
-import me.jeremiah.databases.utils.cassandra.ByteArrayCodec;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -147,4 +154,34 @@ public class Cassandra implements Database {
     }
     return entries;
   }
+
+  @Getter
+  private static class ByteArrayCodec implements TypeCodec<byte[]> {
+
+    private final GenericType<byte[]> javaType = GenericType.of(byte[].class);
+    private final DataType cqlType = TypeCodecs.BLOB.getCqlType();
+
+
+    @Override
+    public ByteBuffer encode(byte[] value, @NotNull ProtocolVersion protocolVersion) {
+      return value == null ? null : ByteBuffer.wrap(value);
+    }
+
+    @Override
+    public byte[] decode(ByteBuffer bytes, @NotNull ProtocolVersion protocolVersion) {
+      return bytes == null ? null : bytes.array();
+    }
+
+    @Override
+    public @NotNull String format(byte[] value) {
+      return value == null ? "NULL" : Bytes.asList(value).toString();
+    }
+
+    @Override
+    public byte[] parse(String value) {
+      throw new UnsupportedOperationException("Parsing not supported for byte[]");
+    }
+
+  }
+
 }
