@@ -63,12 +63,12 @@ public class MongoDB implements Database {
 
   @Override
   public void insert(Entry @NotNull ... entries) {
-    bulkWrite(entries, entry -> new InsertOneModel<>(entry.toDocument()));
+    bulkWrite(entries, writable -> new InsertOneModel<>(writable.toDocument()));
   }
 
   @Override
   public void update(Entry @NotNull ... entries) {
-    bulkWrite(entries, entry -> new UpdateOneModel<>(new Document("id", entry.getId()), new Document("$set", entry.toDocument())));
+    bulkWrite(entries, writable -> new UpdateOneModel<>(new Document("id", writable.getId()), new Document("$set", writable.toDocument())));
   }
 
   public boolean exists(int id) {
@@ -77,13 +77,13 @@ public class MongoDB implements Database {
 
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
-    bulkWrite(ids, id -> new DeleteOneModel<>(new Document("id", id)));
+    bulkWrite(ids, writable -> new DeleteOneModel<>(new Document("id", writable)));
   }
   
-  private <E> void bulkWrite(@NotNull E @NotNull [] entries, Function<E, WriteModel<Document>> converter) {
+  private <E> void bulkWrite(@NotNull E @NotNull [] writables, Function<E, WriteModel<Document>> converter) {
     List<WriteModel<Document>> updates = new ArrayList<>();
-    for (E entry : entries)
-      updates.add(converter.apply(entry));
+    for (E writable : writables)
+      updates.add(converter.apply(writable));
     this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
   }
 
