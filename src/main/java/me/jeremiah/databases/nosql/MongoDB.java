@@ -71,10 +71,6 @@ public class MongoDB implements Database {
     bulkWrite(entries, writable -> new UpdateOneModel<>(new Document("id", writable.getId()), new Document("$set", writable.toDocument())));
   }
 
-  public boolean exists(int id) {
-    return entries.find(new Document("id", id)).first() != null;
-  }
-
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
     bulkWrite(ids, writable -> new DeleteOneModel<>(new Document("id", writable)));
@@ -85,6 +81,10 @@ public class MongoDB implements Database {
     for (E writable : writables)
       updates.add(converter.apply(writable));
     this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
+  }
+
+  public boolean exists(int id) {
+    return entries.find(new Document("id", id)).first() != null;
   }
 
   @Override

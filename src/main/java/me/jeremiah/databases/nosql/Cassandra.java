@@ -95,14 +95,6 @@ public class Cassandra implements Database {
   }
 
   @Override
-  public boolean exists(int id) {
-    PreparedStatement existsStmt = session.prepare("SELECT COUNT(*) FROM data WHERE id = ?;");
-    ResultSet resultSet = session.execute(existsStmt.bind(id));
-    Row row = resultSet.one();
-    return row != null && row.getLong(0) > 0;
-  }
-
-  @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
     for (int i = 0; i < ids.length; i += BATCH_SIZE) {
       BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
@@ -111,6 +103,14 @@ public class Cassandra implements Database {
         batchBuilder.addStatement(deleteStmt.bind(ids[j]));
       session.execute(batchBuilder.build());
     }
+  }
+
+  @Override
+  public boolean exists(int id) {
+    PreparedStatement existsStmt = session.prepare("SELECT COUNT(*) FROM data WHERE id = ?;");
+    ResultSet resultSet = session.execute(existsStmt.bind(id));
+    Row row = resultSet.one();
+    return row != null && row.getLong(0) > 0;
   }
 
   @Override

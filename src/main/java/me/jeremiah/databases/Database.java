@@ -20,12 +20,6 @@ public interface Database {
 
   void update(@NotNull Entry @NotNull ... entry);
 
-  default boolean exists(@NotNull Entry entry) {
-    return exists(entry.getId());
-  }
-
-  boolean exists(int id);
-
   default void remove(@NotNull Entry @NotNull ... entries) {
     Integer[] ids = new Integer[entries.length];
     for (int i = 0; i < entries.length; i++)
@@ -34,6 +28,12 @@ public interface Database {
   }
 
   void remove(@NotNull Integer @NotNull ... ids);
+
+  default boolean exists(@NotNull Entry entry) {
+    return exists(entry.getId());
+  }
+
+  boolean exists(int id);
 
   Map<Integer, Entry> select();
 

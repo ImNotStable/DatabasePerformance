@@ -40,10 +40,10 @@ public abstract class AbstractSQLDatabase implements Database {
   private String updateEntry = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
   @Setter
   @Getter
-  private String entryExists = "SELECT * FROM entries WHERE id = ?";
+  private String removeEntry = "DELETE FROM entries WHERE id = ?";
   @Setter
   @Getter
-  private String removeEntry = "DELETE FROM entries WHERE id = ?";
+  private String entryExists = "SELECT * FROM entries WHERE id = ?";
   @Setter
   @Getter
   private String selectEntries = "SELECT * FROM entries";
@@ -138,18 +138,6 @@ public abstract class AbstractSQLDatabase implements Database {
   }
 
   @Override
-  public boolean exists(int id) {
-    AtomicBoolean exists = new AtomicBoolean(false);
-    handleQuery(entryExists, preparedStatement -> {
-      parseExists(id, preparedStatement);
-      try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        exists.set(resultSet.next());
-      }
-    });
-    return exists.get();
-  }
-
-  @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
     handle(removeEntry, preparedStatement -> {
       int count = 0;
@@ -161,6 +149,18 @@ public abstract class AbstractSQLDatabase implements Database {
       }
       preparedStatement.executeBatch();
     });
+  }
+
+  @Override
+  public boolean exists(int id) {
+    AtomicBoolean exists = new AtomicBoolean(false);
+    handleQuery(entryExists, preparedStatement -> {
+      parseExists(id, preparedStatement);
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        exists.set(resultSet.next());
+      }
+    });
+    return exists.get();
   }
 
   @Override
@@ -196,11 +196,11 @@ public abstract class AbstractSQLDatabase implements Database {
     preparedStatement.setInt(6, entry.getId());
   }
 
-  protected void parseExists(int id, PreparedStatement preparedStatement) throws SQLException {
+  protected void parseRemove(int id, PreparedStatement preparedStatement) throws SQLException {
     preparedStatement.setInt(1, id);
   }
 
-  protected void parseRemove(int id, PreparedStatement preparedStatement) throws SQLException {
+  protected void parseExists(int id, PreparedStatement preparedStatement) throws SQLException {
     preparedStatement.setInt(1, id);
   }
 

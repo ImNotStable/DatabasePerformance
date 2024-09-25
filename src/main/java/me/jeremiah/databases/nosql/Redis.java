@@ -72,16 +72,6 @@ public class Redis implements Database {
   }
 
   @Override
-  public boolean exists(int id) {
-    try (Jedis jedis = jedisPool.getResource()) {
-      return jedis.exists(Ints.toByteArray(id));
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
-      return false;
-    }
-  }
-
-  @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
@@ -92,6 +82,16 @@ public class Redis implements Database {
       pipeline.sync();
     } catch (Exception exception) {
       ExceptionManager.handleException(this, exception);
+    }
+  }
+
+  @Override
+  public boolean exists(int id) {
+    try (Jedis jedis = jedisPool.getResource()) {
+      return jedis.exists(Ints.toByteArray(id));
+    } catch (Exception exception) {
+      ExceptionManager.handleException(this, exception);
+      return false;
     }
   }
 

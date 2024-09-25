@@ -6,10 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Neo4j implements Database {
 
@@ -74,23 +71,20 @@ public class Neo4j implements Database {
   }
 
   @Override
-  public boolean exists(int id) {
-    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"))) {
-      Result result = session.run("MATCH (e:Entry {id: $id}) RETURN e", Values.parameters("id", id));
-      return result.hasNext();
+  public void remove(@NotNull Integer @NotNull ... ids) {
+    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
+         Transaction tx = session.beginTransaction()) {
+      List<Integer> idList = Arrays.asList(ids);
+      tx.run("UNWIND $ids AS id MATCH (e:Entry {id: id}) DETACH DELETE e", Values.parameters("ids", idList));
+      tx.commit();
     }
   }
 
   @Override
-  public void remove(@NotNull Integer @NotNull ... ids) {
-    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
-         Transaction tx = session.beginTransaction()) {
-      List<Integer> idList = new ArrayList<>();
-      for (int id : ids) {
-        idList.add(id);
-      }
-      tx.run("UNWIND $ids AS id MATCH (e:Entry {id: id}) DETACH DELETE e", Values.parameters("ids", idList));
-      tx.commit();
+  public boolean exists(int id) {
+    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"))) {
+      Result result = session.run("MATCH (e:Entry {id: $id}) RETURN e", Values.parameters("id", id));
+      return result.hasNext();
     }
   }
 
