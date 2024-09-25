@@ -25,24 +25,16 @@ public class Redis implements Database {
 
   @Override
   public void open() {
-    try {
-      JedisPoolConfig poolConfig = new JedisPoolConfig();
-      poolConfig.setMaxTotal(128);
-      poolConfig.setMaxIdle(128);
-      poolConfig.setMinIdle(16);
-      jedisPool = new JedisPool(poolConfig, "localhost", 6379, 100000);
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
-    }
+    JedisPoolConfig poolConfig = new JedisPoolConfig();
+    poolConfig.setMaxTotal(128);
+    poolConfig.setMaxIdle(128);
+    poolConfig.setMinIdle(16);
+    jedisPool = new JedisPool(poolConfig, "localhost", 6379, 100000);
   }
 
   @Override
   public void close() {
-    try {
-      jedisPool.close();
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
-    }
+    jedisPool.close();
   }
 
   @Override
@@ -61,8 +53,6 @@ public class Redis implements Database {
       for (Entry entry : entries)
         pipeline.set(Ints.toByteArray(entry.getId()), entry.bytes());
       pipeline.sync();
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -80,8 +70,6 @@ public class Redis implements Database {
         rawIds[i] = Ints.toByteArray(ids[i]);
       pipeline.del(rawIds);
       pipeline.sync();
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
     }
   }
 
@@ -89,9 +77,6 @@ public class Redis implements Database {
   public boolean exists(int id) {
     try (Jedis jedis = jedisPool.getResource()) {
       return jedis.exists(Ints.toByteArray(id));
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
-      return false;
     }
   }
 
@@ -120,8 +105,6 @@ public class Redis implements Database {
         byte[] value = responses.get(i).get();
         entries.put(id, new Entry(id, value));
       }
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
     }
     return entries;
   }
