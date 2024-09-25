@@ -36,13 +36,8 @@ public class ByteOracleDB extends OracleDB {
   }
 
   @Override
-  protected Entry deserializeEntry(int id, ResultSet resultSet) {
-    try {
-      return new Entry(id, resultSet.getBytes("data"));
-    } catch (SQLException exception) {
-      ExceptionManager.handleException(this, exception);
-      return null;
-    }
+  protected Entry deserializeEntry(int id, ResultSet resultSet) throws SQLException {
+    return new Entry(id, resultSet.getBytes("data"));
   }
 
 

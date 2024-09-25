@@ -1,7 +1,6 @@
 package me.jeremiah.databases.sql;
 
 import me.jeremiah.Entry;
-import me.jeremiah.ExceptionManager;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,13 +35,8 @@ public class ByteMariaDB extends MariaDB {
   }
 
   @Override
-  protected Entry deserializeEntry(int id, ResultSet resultSet) {
-    try {
-      return new Entry(id, resultSet.getBytes("data"));
-    } catch (SQLException exception) {
-      ExceptionManager.handleException(this, exception);
-      return null;
-    }
+  protected Entry deserializeEntry(int id, ResultSet resultSet) throws SQLException {
+    return new Entry(id, resultSet.getBytes("data"));
   }
 
 }

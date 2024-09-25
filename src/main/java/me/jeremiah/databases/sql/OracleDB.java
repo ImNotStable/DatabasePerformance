@@ -1,7 +1,6 @@
 package me.jeremiah.databases.sql;
 
 import me.jeremiah.Entry;
-import me.jeremiah.ExceptionManager;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -44,20 +43,15 @@ public class OracleDB extends AbstractSQLDatabase {
   }
 
   @Override
-  protected Entry deserializeEntry(int id, ResultSet resultSet) {
-    try {
-      return new Entry(
-        id,
-        resultSet.getString("first_name"),
-        resultSet.getString("middle_initial").charAt(0),
-        resultSet.getString("last_name"),
-        resultSet.getInt("age"),
-        resultSet.getBigDecimal("net_worth").doubleValue()
-      );
-    } catch (SQLException exception) {
-      ExceptionManager.handleException(this, exception);
-    }
-    return null;
+  protected Entry deserializeEntry(int id, ResultSet resultSet) throws SQLException {
+    return new Entry(
+      id,
+      resultSet.getString("first_name"),
+      resultSet.getString("middle_initial").charAt(0),
+      resultSet.getString("last_name"),
+      resultSet.getInt("age"),
+      resultSet.getBigDecimal("net_worth").doubleValue()
+    );
   }
 
 }
