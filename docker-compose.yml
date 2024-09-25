@@ -46,17 +46,6 @@ services:
     expose:
       - "1433"
 
-  cockroachdb:
-    image: cockroachdb/cockroach:latest
-    container_name: CockroachDB
-    command: start-single-node --accept-sql-without-tls --insecure
-    environment:
-      COCKROACH_DATABASE: data
-    ports:
-      - "26257:26257"
-    volumes:
-      - P:/IntelliJProjects/DatabasePerformance/.databases/cockroachdb:/cockroach/cockroach-data
-
   mongodb:
     image: mongo:latest
     container_name: MongoDB
