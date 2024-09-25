@@ -87,23 +87,23 @@ public class Cassandra implements Database {
 
   @Override
   public boolean exists(int id) {
-    PreparedStatement existsStmt = session.prepare("SELECT COUNT(*) FROM data WHERE id = ?;");
-    ResultSet resultSet = session.execute(existsStmt.bind(id));
-    Row row = resultSet.one();
-    return row != null && row.getLong(0) > 0;
+    return handleQuery("SELECT COUNT(*) FROM data WHERE id = ?;", resultSet -> {
+      Row row = resultSet.one();
+      return row != null && row.getLong(0) > 0;
+    }, id);
   }
 
   @Override
   public Map<Integer, Entry> select() {
-    Map<Integer, Entry> entries = new HashMap<>();
-    PreparedStatement selectStmt = session.prepare("SELECT id, bytes FROM data;");
-    ResultSet resultSet = session.execute(selectStmt.bind());
-    for (Row row : resultSet) {
-      int id = row.getInt("id");
-      byte[] bytes = row.getByteBuffer("bytes").array();
-      entries.put(id, new Entry(id, bytes));
-    }
-    return entries;
+    return handleQuery("SELECT id, bytes FROM data;", resultSet -> {
+      Map<Integer, Entry> entries = new HashMap<>();
+        for (Row row : resultSet) {
+          int id = row.getInt("id");
+          byte[] bytes = row.getByteBuffer("bytes").array();
+          entries.put(id, new Entry(id, bytes));
+        }
+        return entries;
+      });
   }
 
   private <W> void handleBatchAction(String statement, @NotNull W @NotNull [] writables, BatchAction<W> parser) {
@@ -116,9 +116,21 @@ public class Cassandra implements Database {
     }
   }
 
+  private <R> R handleQuery(String statement, Query<R> query, Object... bindables) {
+    PreparedStatement preparedStatement = session.prepare(statement);
+    ResultSet resultSet = session.execute(preparedStatement.bind(bindables));
+    return query.apply(resultSet);
+  }
+
   private interface BatchAction<W> {
 
     Object[] accept(W writable);
+
+  }
+
+  private interface Query<R> {
+
+    R apply(ResultSet resultSet);
 
   }
 
