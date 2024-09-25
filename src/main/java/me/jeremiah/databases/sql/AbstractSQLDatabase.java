@@ -7,7 +7,6 @@ import me.jeremiah.Entry;
 import me.jeremiah.ExceptionManager;
 import me.jeremiah.databases.Database;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -131,10 +130,10 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     }
   }
 
-  private <W> void handleBatchAction(String statement, @NotNull W @NotNull [] writables, SQLBatchAction<W> parser) {
+  private <W> void handleBatchAction(String statement, W[] writables, SQLBatchAction<W> parser) {
     handle(statement, preparedStatement -> {
       int count = 0;
-      for (@NotNull W writable : writables) {
+      for (W writable : writables) {
         parser.accept(writable, preparedStatement);
         preparedStatement.addBatch();
         if (++count % MAX_BATCH_SIZE == 0)
@@ -148,7 +147,7 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     return handleQuery(statement, null, query);
   }
 
-  private <R> R handleQuery(String statement, @Nullable SQLAction action, @NotNull SQLQuery<R> query) {
+  private <R> R handleQuery(String statement, SQLAction action, SQLQuery<R> query) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
       if (action != null)

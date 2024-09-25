@@ -106,7 +106,7 @@ public class Cassandra implements Database {
       });
   }
 
-  private <W> void handleBatchAction(String statement, @NotNull W @NotNull [] writables, BatchAction<W> parser) {
+  private <W> void handleBatchAction(String statement, W[] writables, BatchAction<W> parser) {
     for (int i = 0; i < writables.length; i += BATCH_SIZE) {
       BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
       PreparedStatement preparedStatement = session.prepare(statement);

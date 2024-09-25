@@ -62,12 +62,12 @@ public class MongoDB implements Database {
   }
 
   @Override
-  public void insert(Entry @NotNull ... entries) {
+  public void insert(@NotNull Entry @NotNull ... entries) {
     bulkWrite(entries, writable -> new InsertOneModel<>(writable.toDocument()));
   }
 
   @Override
-  public void update(Entry @NotNull ... entries) {
+  public void update(@NotNull Entry @NotNull ... entries) {
     bulkWrite(entries, writable -> new UpdateOneModel<>(new Document("id", writable.getId()), new Document("$set", writable.toDocument())));
   }
 
@@ -76,7 +76,7 @@ public class MongoDB implements Database {
     bulkWrite(ids, writable -> new DeleteOneModel<>(new Document("id", writable)));
   }
   
-  private <W> void bulkWrite(@NotNull W @NotNull [] writables, Function<W, WriteModel<Document>> converter) {
+  private <W> void bulkWrite(W[] writables, Function<W, WriteModel<Document>> converter) {
     List<WriteModel<Document>> updates = new ArrayList<>();
     for (W writable : writables)
       updates.add(converter.apply(writable));
