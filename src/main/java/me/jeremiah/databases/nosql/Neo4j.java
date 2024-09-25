@@ -82,7 +82,7 @@ public class Neo4j implements Database {
   }
 
   @Override
-  public void remove(int... ids) {
+  public void remove(@NotNull Integer @NotNull ... ids) {
     try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
          Transaction tx = session.beginTransaction()) {
       List<Integer> idList = new ArrayList<>();

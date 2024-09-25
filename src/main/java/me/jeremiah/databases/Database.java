@@ -27,13 +27,13 @@ public interface Database {
   boolean exists(int id);
 
   default void remove(@NotNull Entry @NotNull ... entries) {
-    int[] ids = new int[entries.length];
+    Integer[] ids = new Integer[entries.length];
     for (int i = 0; i < entries.length; i++)
       ids[i] = entries[i].getId();
     remove(ids);
   }
 
-  void remove(int... ids);
+  void remove(@NotNull Integer @NotNull ... ids);
 
   Map<Integer, Entry> select();
 

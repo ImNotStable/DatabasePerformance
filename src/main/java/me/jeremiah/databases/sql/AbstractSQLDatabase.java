@@ -150,7 +150,7 @@ public abstract class AbstractSQLDatabase implements Database {
   }
 
   @Override
-  public void remove(int... ids) {
+  public void remove(@NotNull Integer @NotNull ... ids) {
     handle(removeEntry, preparedStatement -> {
       int count = 0;
       for (int id : ids) {

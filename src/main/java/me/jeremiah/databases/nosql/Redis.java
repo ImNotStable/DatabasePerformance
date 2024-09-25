@@ -82,7 +82,7 @@ public class Redis implements Database {
   }
 
   @Override
-  public void remove(int... ids) {
+  public void remove(@NotNull Integer @NotNull ... ids) {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
       byte[][] rawIds = new byte[ids.length][];
