@@ -12,10 +12,10 @@ public class ByteMicrosoftSQL extends MicrosoftSQL {
   public ByteMicrosoftSQL() {
     super();
 
-    setCreateTable("CREATE TABLE entries(id INT PRIMARY KEY, data BINARY(40))");
-    setInsertEntry("INSERT INTO entries (id, data) VALUES (?,?)");
-    setUpdateEntry("UPDATE entries SET data = ? WHERE id = ?");
-    setSelectEntries("SELECT * FROM entries");
+    setCreateTableStatement("CREATE TABLE entries(id INT PRIMARY KEY, data BINARY(40))");
+    setInsertEntryStatement("INSERT INTO entries (id, data) VALUES (?,?)");
+    setUpdateEntryStatement("UPDATE entries SET data = ? WHERE id = ?");
+    setSelectEntriesStatement("SELECT * FROM entries");
   }
 
   @Override

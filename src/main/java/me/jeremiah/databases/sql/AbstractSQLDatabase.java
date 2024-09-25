@@ -56,13 +56,13 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   protected void reloadTable(Connection connection, Statement statement) {
     try {
-      statement.execute(getDropTable());
+      statement.execute(getDropTableStatement());
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
     try {
-      statement.execute(getCreateTable());
+      statement.execute(getCreateTableStatement());
       connection.commit();
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
@@ -79,12 +79,12 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   @Override
   public void wipe() {
-    handle(getWipeTable());
+    handle(getTableWipeStatemtn());
   }
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    handle(getInsertEntry(), preparedStatement -> {
+    handle(getInsertEntryStatement(), preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
         parseInsert(entry, preparedStatement);
@@ -98,7 +98,7 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    handle(getUpdateEntry(), preparedStatement -> {
+    handle(getUpdateEntryStatement(), preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
         parseUpdate(entry, preparedStatement);
@@ -112,7 +112,7 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
 
   @Override
   public void remove(@NotNull Integer @NotNull ... ids) {
-    handle(getRemoveEntry(), preparedStatement -> {
+    handle(getRemoveEntryStatement(), preparedStatement -> {
       int count = 0;
       for (int id : ids) {
         parseRemove(id, preparedStatement);
@@ -127,7 +127,7 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
   @Override
   public boolean exists(int id) {
     AtomicBoolean exists = new AtomicBoolean(false);
-    handleQuery(getEntryExists(), preparedStatement -> {
+    handleQuery(getEntryExistsStatement(), preparedStatement -> {
       parseExists(id, preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         exists.set(resultSet.next());
@@ -140,7 +140,7 @@ public abstract non-sealed class AbstractSQLDatabase extends SQLStatementHandler
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
 
-    handleQuery(getSelectEntries(), preparedStatement -> {
+    handleQuery(getSelectEntriesStatement(), preparedStatement -> {
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         while (resultSet.next()) {
           int id = resultSet.getInt("id");

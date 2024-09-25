@@ -15,7 +15,7 @@ public class OracleDB extends AbstractSQLDatabase {
     getConfig().setUsername("system");
     getConfig().setPassword("root");
 
-    setCreateTable("CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR2(32), middle_initial CHAR(1), last_name VARCHAR2(32), age INT, net_worth BINARY_DOUBLE)");
+    setCreateTableStatement("CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR2(32), middle_initial CHAR(1), last_name VARCHAR2(32), age INT, net_worth BINARY_DOUBLE)");
   }
 
   @Override
