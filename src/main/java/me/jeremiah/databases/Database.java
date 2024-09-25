@@ -49,11 +49,4 @@ public interface Database {
     return true;
   }
 
-  default boolean verifyData(int @NotNull ... ids) {
-    for (int id : ids)
-      if (!exists(id))
-        return false;
-    return true;
-  }
-
 }
