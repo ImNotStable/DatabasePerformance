@@ -229,8 +229,7 @@ public abstract class AbstractSQLDatabase implements Database {
 
   protected Entry deserializeEntry(int id, ResultSet resultSet) {
     try {
-      return new Entry(
-        id,
+      return new Entry(id,
         resultSet.getString("first_name"),
         resultSet.getString("middle_initial").charAt(0),
         resultSet.getString("last_name"),
