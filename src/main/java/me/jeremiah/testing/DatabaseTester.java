@@ -50,14 +50,13 @@ public class DatabaseTester {
 
     System.out.println("Initializing " + database.getName());
     database.open();
-    int index = 0;
     for (int currentEntryAmount : entryAmounts) {
       verificationIndex = 0;
       System.out.println("Testing " + database.getName() + " for " + currentEntryAmount + " Entries");
       database.wipe();
       currentTimings = new TestTimings();
       runInsertionTest(currentEntryAmount);
-      runVerificationTest(0, entryAmounts[index]);
+      runVerificationTest(0, currentEntryAmount);
       runRetrievalTest();
       int tenPercent = (int) (currentEntryAmount * 0.1);
       runUpdatingTest(tenPercent);
@@ -67,7 +66,6 @@ public class DatabaseTester {
       runRetrievalTest();
       currentTimings.time();
       timings.put(currentEntryAmount, currentTimings);
-      index++;
     }
     database.close();
   }
