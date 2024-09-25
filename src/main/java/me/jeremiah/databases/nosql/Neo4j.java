@@ -44,30 +44,12 @@ public class Neo4j implements Database {
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
-         Transaction tx = session.beginTransaction()) {
-      List<Value> records = new ArrayList<>();
-      for (Entry entry : entries) {
-        byte[] entryBytes = entry.bytes();
-        records.add(Values.parameters("id", entry.getId(), "data", entryBytes));
-      }
-      tx.run("UNWIND $batch AS row CREATE (e:Entry {id: row.id, data: row.data})", Values.parameters("batch", records));
-      tx.commit();
-    }
+    alterEntries("UNWIND $batch AS row CREATE (e:Entry {id: row.id, data: row.data})", entries);
   }
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
-         Transaction tx = session.beginTransaction()) {
-      List<Value> records = new ArrayList<>();
-      for (Entry entry : entries) {
-        byte[] entryBytes = entry.bytes();
-        records.add(Values.parameters("id", entry.getId(), "data", entryBytes));
-      }
-      tx.run("UNWIND $batch AS row MATCH (e:Entry {id: row.id}) SET e.data = row.data", Values.parameters("batch", records));
-      tx.commit();
-    }
+    alterEntries("UNWIND $batch AS row MATCH (e:Entry {id: row.id}) SET e.data = row.data", entries);
   }
 
   @Override
@@ -103,4 +85,18 @@ public class Neo4j implements Database {
     }
     return entries;
   }
+
+  private void alterEntries(String statement, Entry[] entries) {
+    try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
+         Transaction tx = session.beginTransaction()) {
+      List<Value> records = new ArrayList<>();
+      for (Entry entry : entries) {
+        byte[] entryBytes = entry.bytes();
+        records.add(Values.parameters("id", entry.getId(), "data", entryBytes));
+      }
+      tx.run(statement, Values.parameters("batch", records));
+      tx.commit();
+    }
+  }
+
 }
