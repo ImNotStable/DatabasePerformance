@@ -110,7 +110,7 @@ public abstract class AbstractSQLDatabase implements Database {
   }
 
   @Override
-  public void insert(@NotNull Entry... entries) {
+  public void insert(@NotNull Entry @NotNull ... entries) {
     handle(insertEntry, preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
@@ -124,7 +124,7 @@ public abstract class AbstractSQLDatabase implements Database {
   }
 
   @Override
-  public void update(@NotNull Entry... entries) {
+  public void update(@NotNull Entry @NotNull ... entries) {
     handle(updateEntry, preparedStatement -> {
       int count = 0;
       for (Entry entry : entries) {
@@ -140,7 +140,7 @@ public abstract class AbstractSQLDatabase implements Database {
   @Override
   public boolean exists(int id) {
     AtomicBoolean exists = new AtomicBoolean(false);
-    handle(entryExists, preparedStatement -> {
+    handleQuery(entryExists, preparedStatement -> {
       parseExists(id, preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         exists.set(resultSet.next());
@@ -167,7 +167,7 @@ public abstract class AbstractSQLDatabase implements Database {
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
 
-    handle(selectEntries, preparedStatement -> {
+    handleQuery(selectEntries, preparedStatement -> {
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
         while (resultSet.next()) {
           int id = resultSet.getInt("id");
@@ -205,7 +205,7 @@ public abstract class AbstractSQLDatabase implements Database {
   }
 
   private void handle(String statement) {
-    handle(statement, _ -> {});
+    handle(statement, PreparedStatement::execute);
   }
 
   private void handle(String statement, SQLAction action) {
@@ -213,6 +213,15 @@ public abstract class AbstractSQLDatabase implements Database {
          PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
       action.accept(preparedStatement);
       connection.commit();
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
+    }
+  }
+
+  private void handleQuery(String statement, SQLAction action) {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
+      action.accept(preparedStatement);
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
@@ -230,8 +239,8 @@ public abstract class AbstractSQLDatabase implements Database {
       );
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
+      return null;
     }
-    return null;
   }
 
   private interface SQLAction {

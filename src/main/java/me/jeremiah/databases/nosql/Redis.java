@@ -55,7 +55,7 @@ public class Redis implements Database {
   }
 
   @Override
-  public void insert(@NotNull Entry... entries) {
+  public void insert(@NotNull Entry @NotNull ... entries) {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
       for (Entry entry : entries)
@@ -67,7 +67,7 @@ public class Redis implements Database {
   }
 
   @Override
-  public void update(@NotNull Entry... entries) {
+  public void update(@NotNull Entry @NotNull ... entries) {
     insert(entries);
   }
 

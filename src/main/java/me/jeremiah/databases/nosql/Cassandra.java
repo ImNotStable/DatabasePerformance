@@ -76,7 +76,7 @@ public class Cassandra implements Database {
   }
 
   @Override
-  public void insert(@NotNull Entry... entries) {
+  public void insert(@NotNull Entry @NotNull ... entries) {
     List<CompletableFuture<AsyncResultSet>> futures = new ArrayList<>();
     for (int i = 0; i < entries.length; i += MAX_BATCH_SIZE) {
       BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);
@@ -91,7 +91,7 @@ public class Cassandra implements Database {
   }
 
   @Override
-  public void update(@NotNull Entry... entries) {
+  public void update(@NotNull Entry @NotNull ... entries) {
     List<CompletableFuture<AsyncResultSet>> futures = new ArrayList<>();
     for (int i = 0; i < entries.length; i += MAX_BATCH_SIZE) {
       BatchStatementBuilder batchBuilder = BatchStatement.builder(BatchType.UNLOGGED);

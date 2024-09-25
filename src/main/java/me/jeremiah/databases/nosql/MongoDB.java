@@ -11,6 +11,7 @@ import me.jeremiah.Entry;
 import me.jeremiah.databases.Database;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,7 +61,7 @@ public class MongoDB implements Database {
   }
 
   @Override
-  public void insert(Entry... entries) {
+  public void insert(Entry @NotNull ... entries) {
     List<WriteModel<Document>> updates = new ArrayList<>();
     for (Entry entry : entries)
       updates.add(new InsertOneModel<>(entry.toDocument()));
@@ -68,7 +69,7 @@ public class MongoDB implements Database {
   }
 
   @Override
-  public void update(Entry... entries) {
+  public void update(Entry @NotNull ... entries) {
     List<WriteModel<Document>> updates = new ArrayList<>();
     for (Entry entry : entries)
       updates.add(new UpdateOneModel<>(new Document("id", entry.getId()), new Document("$set", entry.toDocument())));

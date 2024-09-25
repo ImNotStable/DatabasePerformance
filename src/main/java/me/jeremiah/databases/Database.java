@@ -16,9 +16,9 @@ public interface Database {
 
   void wipe();
 
-  void insert(@NotNull Entry... entries);
+  void insert(@NotNull Entry @NotNull ... entries);
 
-  void update(@NotNull Entry... entry);
+  void update(@NotNull Entry @NotNull ... entry);
 
   default boolean exists(@NotNull Entry entry) {
     return exists(entry.getId());
@@ -26,7 +26,7 @@ public interface Database {
 
   boolean exists(int id);
 
-  default void remove(@NotNull Entry... entries) {
+  default void remove(@NotNull Entry @NotNull ... entries) {
     int[] ids = new int[entries.length];
     for (int i = 0; i < entries.length; i++)
       ids[i] = entries[i].getId();

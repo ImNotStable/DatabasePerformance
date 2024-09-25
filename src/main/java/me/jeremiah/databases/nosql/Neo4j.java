@@ -46,7 +46,7 @@ public class Neo4j implements Database {
   }
 
   @Override
-  public void insert(@NotNull Entry... entries) {
+  public void insert(@NotNull Entry @NotNull ... entries) {
     try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
          Transaction tx = session.beginTransaction()) {
       List<Value> records = new ArrayList<>();
@@ -60,7 +60,7 @@ public class Neo4j implements Database {
   }
 
   @Override
-  public void update(@NotNull Entry... entries) {
+  public void update(@NotNull Entry @NotNull ... entries) {
     try (Session session = driver.session(SessionConfig.forDatabase("neo4j"));
          Transaction tx = session.beginTransaction()) {
       List<Value> records = new ArrayList<>();
