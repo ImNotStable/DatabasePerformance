@@ -19,11 +19,11 @@ public class TestTimings {
     time(null);
   }
 
-  public void time(@Nullable DatabaseOperation nextOperation) {
+  public void time(@Nullable TestInstructions nextInstruction) {
     if (!rawTimings.isEmpty() && !rawTimings.getLast().isComplete())
       rawTimings.getLast().end();
-    if (nextOperation != null)
-      rawTimings.add(new Timing(nextOperation).start());
+    if (nextInstruction != null)
+      rawTimings.add(new Timing(nextInstruction).start());
   }
 
   public long getTotalTime() {
@@ -36,7 +36,7 @@ public class TestTimings {
     if (rawTimings.isEmpty() || !rawTimings.getLast().isComplete())
       throw new IllegalStateException("Cannot get total time before test is finished");
     List<Timing> timings = rawTimings.stream()
-      .filter(timing -> operation == null || timing.getOperation().equals(operation))
+      .filter(timing -> operation == null || timing.getInstructions().equals(operation))
       .toList();
     return timings.getLast().getEnd() - timings.getFirst().getStart();
   }
@@ -48,20 +48,20 @@ public class TestTimings {
 
     mappings.put("Total_Time", getTotalTime());
 
-    Map<DatabaseOperation, Integer> counts = new LinkedHashMap<>();
+    Map<TestInstructions, Integer> counts = new LinkedHashMap<>();
     for (Timing timing : rawTimings)
-      if (rawTimings.stream().filter(timing1 -> timing1.getOperation().equals(timing.getOperation())).count() > 1)
-        counts.put(timing.getOperation(), 0);
+      if (rawTimings.stream().filter(timing1 -> timing1.getInstructions().equals(timing.getInstructions())).count() > 1)
+        counts.put(timing.getInstructions(), 0);
 
     for (Timing timing : rawTimings) {
-      if (counts.containsKey(timing.getOperation())) {
-        counts.computeIfPresent(timing.getOperation(), (_, count) -> count + 1);
+      if (counts.containsKey(timing.getInstructions())) {
+        counts.computeIfPresent(timing.getInstructions(), (_, count) -> count + 1);
         mappings.put(
-          String.format("%s_%d", timing.getOperation().getName(), counts.get(timing.getOperation())),
+          String.format("%s_%d", timing.getInstructions().getName(), counts.get(timing.getInstructions())),
           timing.getDuration()
         );
       } else
-        mappings.put(timing.getOperation().getName(), timing.getDuration());
+        mappings.put(timing.getInstructions().getName(), timing.getDuration());
     }
 
     return mappings;
@@ -85,23 +85,23 @@ public class TestTimings {
   @Getter
   public static class Timing {
 
-    private final DatabaseOperation operation;
+    private final TestInstructions instructions;
     private long start;
     private long end;
 
-    public Timing(DatabaseOperation operation) {
-      this.operation = operation;
+    public Timing(TestInstructions operation) {
+      this.instructions = operation;
     }
 
     public Timing start() {
-      System.out.println(operation.getStartMessage());
+      System.out.println(instructions.getStartMessage());
       start = System.nanoTime();
       return this;
     }
 
     public void end() {
       end = System.nanoTime();
-      System.out.println(operation.getEndMessage(TimeUtils.formatTime(getDuration())));
+      System.out.println(instructions.getEndMessage(TimeUtils.formatTime(getDuration())));
     }
 
     public boolean isComplete() {

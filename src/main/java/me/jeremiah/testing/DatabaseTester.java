@@ -2,6 +2,7 @@ package me.jeremiah.testing;
 
 import com.google.gson.JsonObject;
 import lombok.Getter;
+import lombok.Setter;
 import me.jeremiah.Entry;
 import me.jeremiah.Main;
 import me.jeremiah.databases.Database;
@@ -14,6 +15,14 @@ import java.util.stream.Collectors;
 
 public class DatabaseTester {
 
+  private static final InstructionSet DEFAULT_INSTRUCTION_SET = new InstructionSet(
+    TestInstructions.INSERTION_TEST,
+    TestInstructions.VERIFICATION_TEST,
+    TestInstructions.RETRIEVAL_TEST,
+    TestInstructions.UPDATE_TEST,
+    TestInstructions.REMOVAL_TEST
+  );
+
   public static DatabaseTester test(Database database, int... entryAmount) {
     return new DatabaseTester(database, entryAmount);
   }
@@ -21,19 +30,27 @@ public class DatabaseTester {
   @Getter
   private final Database database;
 
+  private final InstructionSet instructionSet;
+
   private final int[] entryAmounts;
+  @Getter
   private final Entry[] entries;
 
   @Getter
   private final Map<Integer, TestTimings> timings = new LinkedHashMap<>();
+  @Getter
   private TestTimings currentTimings;
 
+  @Getter
   private final List<List<Boolean>> verificationResults;
 
+  @Setter
+  @Getter
   private int verificationIndex = -1;
 
-  private DatabaseTester(Database database, int... entryAmounts) {
+  private DatabaseTester(Database database, InstructionSet instructionSet, int... entryAmounts) {
     this.database = database;
+    this.instructionSet = instructionSet;
     this.entryAmounts = entryAmounts;
     int maxEntryAmount = Arrays.stream(entryAmounts).max().orElse(0);
     this.entries = new Entry[maxEntryAmount];
@@ -62,15 +79,6 @@ public class DatabaseTester {
       currentTimings = new TestTimings();
 
       database.wipe();
-      runInsertionTest(currentEntryAmount);
-      runVerificationTest(0, currentEntryAmount);
-      runRetrievalTest();
-      runUpdatingTest(tenPercent);
-      runVerificationTest(0, currentEntryAmount);
-      runRemovalTest(tenPercent);
-      runVerificationTest(tenPercent, currentEntryAmount);
-      runRetrievalTest();
-      currentTimings.time();
       timings.put(currentEntryAmount, currentTimings);
     }
     database.close();
