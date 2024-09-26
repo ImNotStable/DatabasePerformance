@@ -76,11 +76,6 @@ public class DatabaseTester {
     database.close();
   }
 
-  private void open() {
-    currentTimings.time(DatabaseOperation.INITIALIZATION);
-    database.open();
-  }
-
   private void runInsertionTest(int entryAmount) {
     currentTimings.time(DatabaseOperation.INSERTION);
     database.insert(Arrays.copyOf(entries, entryAmount));
@@ -107,12 +102,6 @@ public class DatabaseTester {
   private void runRetrievalTest() {
     currentTimings.time(DatabaseOperation.RETRIEVAL);
     database.select();
-  }
-
-  private void close() {
-    currentTimings.time(DatabaseOperation.END);
-    database.close();
-    currentTimings.time();
   }
 
   public Map<String, Map<String, String>> getTimeMappings() {
