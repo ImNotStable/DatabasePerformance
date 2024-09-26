@@ -81,14 +81,6 @@ public class DatabaseTester {
     database.insert(Arrays.copyOf(entries, entryAmount));
   }
 
-  private void runVerificationTest(int from, int to) {
-    currentTimings.time(DatabaseOperation.VERIFICATION);
-    if (verificationResults.size() <= verificationIndex)
-      verificationResults.add(verificationIndex, new ArrayList<>());
-    verificationResults.get(verificationIndex).add(database.verifyData(Arrays.copyOfRange(entries, from, to)));
-    verificationIndex++;
-  }
-
   private void runUpdatingTest(int entryAmount) {
     currentTimings.time(DatabaseOperation.UPDATING);
     database.update(Arrays.copyOf(entries, entryAmount));
@@ -102,6 +94,14 @@ public class DatabaseTester {
   private void runRetrievalTest() {
     currentTimings.time(DatabaseOperation.RETRIEVAL);
     database.select();
+  }
+
+  private void runVerificationTest(int from, int to) {
+    currentTimings.time(DatabaseOperation.VERIFICATION);
+    if (verificationResults.size() <= verificationIndex)
+      verificationResults.add(verificationIndex, new ArrayList<>());
+    verificationResults.get(verificationIndex).add(database.verifyData(Arrays.copyOfRange(entries, from, to)));
+    verificationIndex++;
   }
 
   public Map<String, Map<String, String>> getTimeMappings() {
