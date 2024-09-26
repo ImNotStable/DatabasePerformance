@@ -12,6 +12,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractSQLDatabase extends SQLStatementHandler implements Database {
 
@@ -148,16 +149,14 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
   }
 
   private <R> Optional<R> handleQuery(String statement, SQLAction action, SQLQuery<R> query) {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
+    AtomicReference<R> result = new AtomicReference<>();
+    handle(statement, preparedStatement -> {
       action.accept(preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        return Optional.ofNullable(query.apply(resultSet));
+        result.set(query.apply(resultSet));
       }
-    } catch (SQLException exception) {
-      ExceptionManager.handleException(this, exception);
-      return Optional.empty();
-    }
+    });
+    return Optional.ofNullable(result.get());
   }
 
   private interface SQLAction {
