@@ -8,9 +8,4 @@ public class MicrosoftSQL extends AbstractSQLDatabase {
     getConfig().setPassword("yourStrong(!)Password");
   }
 
-  @Override
-  public String getName() {
-    return "MicrosoftSQL";
-  }
-
 }

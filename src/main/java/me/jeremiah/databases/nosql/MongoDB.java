@@ -21,22 +21,13 @@ import java.util.function.Function;
 
 public class MongoDB implements Database {
 
-  protected final MongoClientSettings settings;
+  protected final MongoClientSettings settings = MongoClientSettings.builder()
+    .applyConnectionString(new ConnectionString("mongodb://localhost:27017/data"))
+    .uuidRepresentation(UuidRepresentation.STANDARD)
+    .applyToConnectionPoolSettings(builder -> builder.maxSize(50))
+    .build();
   private MongoClient client;
   private MongoCollection<Document> entries;
-
-  public MongoDB() {
-    settings = MongoClientSettings.builder()
-      .applyConnectionString(new ConnectionString("mongodb://localhost:27017/data"))
-      .uuidRepresentation(UuidRepresentation.STANDARD)
-      .applyToConnectionPoolSettings(builder -> builder.maxSize(50))
-      .build();
-  }
-
-  @Override
-  public String getName() {
-    return "MongoDB";
-  }
 
   @Override
   public void open() {

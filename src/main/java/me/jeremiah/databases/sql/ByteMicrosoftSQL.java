@@ -11,7 +11,7 @@ public class ByteMicrosoftSQL extends MicrosoftSQL {
   public ByteMicrosoftSQL() {
     super();
 
-    setCreateTableStatement("CREATE TABLE entries(id INT PRIMARY KEY, data BINARY(40))");
+    setCreateTableStatement("CREATE TABLE entries(id INT PRIMARY KEY, data BINARY(64))");
     setInsertEntryStatement("INSERT INTO entries (id, data) VALUES (?,?)");
     setUpdateEntryStatement("UPDATE entries SET data = ? WHERE id = ?");
     setSelectEntriesStatement("SELECT * FROM entries");

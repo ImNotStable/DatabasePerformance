@@ -7,9 +7,4 @@ public class PostgreSQL extends AbstractSQLDatabase {
     getConfig().setUsername("postgres");
   }
 
-  @Override
-  public String getName() {
-    return "PostgreSQL";
-  }
-
 }

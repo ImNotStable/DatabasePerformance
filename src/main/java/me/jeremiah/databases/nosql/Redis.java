@@ -19,11 +19,6 @@ public class Redis implements Database {
   private JedisPool jedisPool;
 
   @Override
-  public String getName() {
-    return "Redis";
-  }
-
-  @Override
   public void open() {
     JedisPoolConfig poolConfig = new JedisPoolConfig();
     poolConfig.setMaxTotal(128);

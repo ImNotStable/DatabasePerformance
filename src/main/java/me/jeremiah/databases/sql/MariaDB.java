@@ -7,9 +7,4 @@ public class MariaDB extends AbstractSQLDatabase {
     getConfig().setUsername("root");
   }
 
-  @Override
-  public String getName() {
-    return "MariaDB";
-  }
-
 }

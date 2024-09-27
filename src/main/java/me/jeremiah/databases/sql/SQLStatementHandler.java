@@ -12,12 +12,15 @@ import java.sql.SQLException;
 @Getter
 class SQLStatementHandler {
 
-  private String dropTableStatement = "DROP TABLE entries";
   private String createTableStatement = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
+  private String dropTableStatement = "DROP TABLE entries";
+
   private String tableWipeStatement = "DELETE FROM entries";
+
   private String insertEntryStatement = "INSERT INTO entries (id, first_name, middle_initial, last_name, age, net_worth) VALUES (?,?,?,?,?,?)";
   private String updateEntryStatement = "UPDATE entries SET first_name = ?, middle_initial = ?, last_name = ?, age = ?, net_worth = ? WHERE id = ?";
   private String removeEntryStatement = "DELETE FROM entries WHERE id = ?";
+
   private String entryExistsStatement = "SELECT * FROM entries WHERE id = ?";
   private String selectEntriesStatement = "SELECT * FROM entries";
 

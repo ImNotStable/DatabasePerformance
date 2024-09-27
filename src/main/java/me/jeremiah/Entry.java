@@ -7,7 +7,8 @@ import me.jeremiah.utils.EntryGeneratorUtils;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 @AllArgsConstructor
 @Setter
@@ -23,16 +24,23 @@ public class Entry {
 
 
   public Entry(int id, byte[] data) {
-    try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data))) {
-      this.id = id;
-      this.firstName = dis.readUTF();
-      this.middleInitial = dis.readChar();
-      this.lastName = dis.readUTF();
-      this.age = dis.readInt();
-      this.netWorth = dis.readDouble();
-    } catch (IOException exception) {
-      throw new RuntimeException("Error deserializing Entry from bytes", exception);
-    }
+    this.id = id;
+    ByteBuffer buffer = ByteBuffer.wrap(data);
+
+    int firstNameLength = buffer.getInt();
+    byte[] firstNameBytes = new byte[firstNameLength];
+    buffer.get(firstNameBytes);
+    this.firstName = new String(firstNameBytes, StandardCharsets.UTF_8);
+
+    this.middleInitial = buffer.getChar();
+
+    int lastNameLength = buffer.getInt();
+    byte[] lastNameBytes = new byte[lastNameLength];
+    buffer.get(lastNameBytes);
+    this.lastName = new String(lastNameBytes, StandardCharsets.UTF_8);
+
+    this.age = buffer.getInt();
+    this.netWorth = buffer.getDouble();
   }
 
   public Entry(int id) {
@@ -69,17 +77,29 @@ public class Entry {
   }
 
   public byte[] bytes() {
-    try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         DataOutputStream dos = new DataOutputStream(baos)) {
-      dos.writeUTF(firstName);
-      dos.writeChar(middleInitial);
-      dos.writeUTF(lastName);
-      dos.writeInt(age);
-      dos.writeDouble(netWorth);
-      return baos.toByteArray();
-    } catch (IOException exception) {
-      throw new RuntimeException("Error serializing Entry to bytes", exception);
-    }
+    byte[] firstNameBytes = firstName.getBytes(StandardCharsets.UTF_8);
+    byte[] lastNameBytes = lastName.getBytes(StandardCharsets.UTF_8);
+
+    ByteBuffer buffer = ByteBuffer.allocate(
+      4 +                     // Length of firstName (int)
+      firstNameBytes.length + // Actual firstName bytes
+      2 +                     // middleInitial (char)
+      4 +                     // Length of lastName (int)
+      lastNameBytes.length +  // Actual lastName bytes
+      4 +                     // age (int)
+      8                       // netWorth (double)
+    );
+
+    buffer
+      .putInt(firstNameBytes.length)  // Length of firstName
+      .put(firstNameBytes)            // firstName bytes
+      .putChar(middleInitial)         // middleInitial
+      .putInt(lastNameBytes.length)   // Length of lastName
+      .put(lastNameBytes)             // lastName bytes
+      .putInt(age)                    // age
+      .putDouble(netWorth);           // netWorth
+
+    return buffer.array();
   }
 
 }

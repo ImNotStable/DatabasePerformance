@@ -29,11 +29,6 @@ public class Cassandra implements Database {
   private CqlSession session;
 
   @Override
-  public String getName() {
-    return "Cassandra";
-  }
-
-  @Override
   public void open() {
     ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder = DriverConfigLoader.programmaticBuilder()
       .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))

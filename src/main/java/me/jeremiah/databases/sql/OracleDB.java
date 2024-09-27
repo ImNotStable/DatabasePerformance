@@ -18,11 +18,6 @@ public class OracleDB extends AbstractSQLDatabase {
   }
 
   @Override
-  public String getName() {
-    return "OracleDB";
-  }
-
-  @Override
   protected void parseInsert(Entry entry, PreparedStatement preparedStatement) throws SQLException {
     preparedStatement.setInt(1, entry.getId());
     preparedStatement.setString(2, entry.getFirstName());

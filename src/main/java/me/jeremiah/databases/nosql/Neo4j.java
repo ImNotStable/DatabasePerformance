@@ -13,11 +13,6 @@ public class Neo4j implements Database {
   private Driver driver;
 
   @Override
-  public String getName() {
-    return "Neo4j";
-  }
-
-  @Override
   public void open() {
     Config config = Config.builder()
       .withMaxConnectionPoolSize(50) // Connection Pooling

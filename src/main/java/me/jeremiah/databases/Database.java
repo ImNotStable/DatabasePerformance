@@ -8,7 +8,9 @@ import java.util.Map;
 
 public interface Database {
 
-  String getName();
+  default String getName() {
+    return getClass().getSimpleName();
+  }
 
   void open();
 
