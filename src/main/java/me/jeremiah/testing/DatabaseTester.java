@@ -81,6 +81,9 @@ public class DatabaseTester {
   }
 
   private void runUpdatingTest(int entryAmount) {
+    currentTimings.time();
+    for (int i = 0; i < entryAmount; i++)
+      entries[i] = new Entry(entries[i].getId());
     currentTimings.time(DatabaseOperation.UPDATING);
     database.update(Arrays.copyOf(entries, entryAmount));
   }
