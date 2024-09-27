@@ -10,6 +10,7 @@ import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,8 +62,7 @@ public class Redis implements Database {
     try (Jedis jedis = jedisPool.getResource()) {
       Pipeline pipeline = jedis.pipelined();
       byte[][] rawIds = new byte[ids.length][];
-      for (int i = 0; i < ids.length; i++)
-        rawIds[i] = Ints.toByteArray(ids[i]);
+      Arrays.setAll(rawIds, i -> Ints.toByteArray(ids[i]));
       pipeline.del(rawIds);
       pipeline.sync();
     }
