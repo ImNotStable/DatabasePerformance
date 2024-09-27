@@ -4,6 +4,7 @@ import me.jeremiah.Entry;
 import me.jeremiah.ExceptionManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public interface Database {
@@ -45,10 +46,7 @@ public interface Database {
       ExceptionManager.handleException(this, new IllegalStateException(String.format("Dataset size mismatch: %s != %s", entries.length, existingEntries.size())));
       return false;
     }
-    for (Entry entry : entries)
-      if (!entry.equals(existingEntries.get(entry.getId())))
-        return false;
-    return true;
+    return Arrays.stream(entries).allMatch(entry -> entry.equals(existingEntries.get(entry.getId())));
   }
 
 }

@@ -13,7 +13,7 @@ import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,9 +68,7 @@ public class MongoDB implements Database {
   }
   
   private <W> void bulkWrite(W[] writables, Function<W, WriteModel<Document>> converter) {
-    List<WriteModel<Document>> updates = new ArrayList<>();
-    for (W writable : writables)
-      updates.add(converter.apply(writable));
+    List<WriteModel<Document>> updates = Arrays.stream(writables).map(converter).toList();
     this.entries.bulkWrite(updates, new BulkWriteOptions().ordered(false));
   }
 
