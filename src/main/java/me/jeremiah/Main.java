@@ -16,6 +16,7 @@ public final class Main {
   private static final File LOG_DIRECTORY = new File("P:/IntelliJProjects/DatabasePerformance/.logs/");
 
   public static void main(String[] args) {
+
     TestCluster cluster = TestCluster.test(getDatabaseStack(), 1_000, 10_000);
     cluster.start();
     cluster.createLog();
@@ -27,14 +28,20 @@ public final class Main {
 
   public static List<Database> getDatabaseStack() {
     return List.of(
-      new ByteMariaDB(),
-      new BytePostgreSQL(),
-      new ByteMicrosoftSQL(),
-      new ByteOracleDB(),
+      new SQLite(),
+      new ByteSQLite(),
+      new H2(),
+      new ByteH2(),
+      new MySQL(),
+      new ByteMySQL(),
       new MariaDB(),
+      new ByteMariaDB(),
       new PostgreSQL(),
-      new OracleDB(),
+      new BytePostgreSQL(),
       new MicrosoftSQL(),
+      new ByteMicrosoftSQL(),
+      new OracleDB(),
+      new ByteOracleDB(),
       new MongoDB(),
       new Redis(),
       new Neo4j(),

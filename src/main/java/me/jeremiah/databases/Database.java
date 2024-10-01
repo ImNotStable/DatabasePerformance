@@ -25,8 +25,7 @@ public interface Database {
 
   default void remove(@NotNull Entry @NotNull ... entries) {
     Integer[] ids = new Integer[entries.length];
-    for (int i = 0; i < entries.length; i++)
-      ids[i] = entries[i].getId();
+    Arrays.setAll(ids, i -> entries[i].getId());
     remove(ids);
   }
 

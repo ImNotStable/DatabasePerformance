@@ -33,10 +33,10 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     config.setJdbcUrl(url);
     config.setAutoCommit(false);
     config.setMaximumPoolSize(20);
+    config.setMinimumIdle(5);
     config.setConnectionTimeout(30000);
     config.setIdleTimeout(600000);
     config.setMaxLifetime(1800000);
-    config.setMinimumIdle(10);
     config.addDataSourceProperty("cachePrepStmts", "true");
     config.addDataSourceProperty("prepStmtCacheSize", "250");
     config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

@@ -1,4 +1,16 @@
 services:
+  mysql:
+    image: mysql:latest
+    container_name: MySQL
+    command: --max_allowed_packet=1073741824 --innodb_buffer_pool_size=1G
+    environment:
+      MYSQL_DATABASE: data
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - P:/IntelliJProjects/DatabasePerformance/.databases/mysql:/var/lib/mysql
+
   mariadb:
     image: mariadb:latest
     container_name: MariaDB
