@@ -44,5 +44,5 @@ dependencies {
 }
 
 compileJava {
-    options.allCompilerArgs += ['--enable-preview']
+    options.compilerArgs += ['--enable-preview']
 }

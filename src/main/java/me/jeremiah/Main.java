@@ -1,10 +1,7 @@
 package me.jeremiah;
 
 import me.jeremiah.databases.Database;
-import me.jeremiah.databases.nosql.Cassandra;
-import me.jeremiah.databases.nosql.MongoDB;
-import me.jeremiah.databases.nosql.Neo4j;
-import me.jeremiah.databases.nosql.Redis;
+import me.jeremiah.databases.nosql.*;
 import me.jeremiah.databases.sql.*;
 import me.jeremiah.testing.TestCluster;
 
@@ -15,9 +12,8 @@ public final class Main {
 
   private static final File LOG_DIRECTORY = new File("P:/IntelliJProjects/DatabasePerformance/.logs/");
 
-  public static void main(String[] args) {
-
-    TestCluster cluster = TestCluster.test(getDatabaseStack(), 1_000, 10_000);
+  public static void main(String[] ignored) {
+    TestCluster cluster = TestCluster.test(getDatabaseStack(), 1_000);//, 10_000);
     cluster.start();
     cluster.createLog();
 
@@ -28,24 +24,17 @@ public final class Main {
 
   public static List<Database> getDatabaseStack() {
     return List.of(
-      new SQLite(),
-      new ByteSQLite(),
-      new H2(),
-      new ByteH2(),
-      new MySQL(),
-      new ByteMySQL(),
-      new MariaDB(),
-      new ByteMariaDB(),
-      new PostgreSQL(),
-      new BytePostgreSQL(),
-      new MicrosoftSQL(),
-      new ByteMicrosoftSQL(),
-      new OracleDB(),
-      new ByteOracleDB(),
-      new MongoDB(),
-      new Redis(),
-      new Neo4j(),
-      new Cassandra()
+      new SQLite(), new ByteSQLite(),
+      new H2(), new ByteH2(),
+      new MySQL(), new ByteMySQL(),
+      new MariaDB(), new ByteMariaDB(),
+      new PostgreSQL(), new BytePostgreSQL(),
+      new MicrosoftSQL(), new ByteMicrosoftSQL(),
+      new OracleDB(), new ByteOracleDB(),
+      new MongoDB(), new ByteMongoDB(),
+      new Redis(), new ByteRedis(),
+      new Neo4j(), new ByteNeo4j(),
+      new Cassandra(), new ByteCassandra()
     );
   }
 

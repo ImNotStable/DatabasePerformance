@@ -63,6 +63,12 @@ public class Entry {
       .append("net_worth", netWorth);
   }
 
+  public @NotNull Document toByteDocument() {
+    return new Document()
+      .append("id", id)
+      .append("data", this.bytes());
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;

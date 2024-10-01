@@ -8,9 +8,14 @@ import org.neo4j.driver.*;
 
 import java.util.*;
 
-public class Neo4j implements Database {
+public class ByteNeo4j implements Database {
 
   private Driver driver;
+
+  @Override
+  public String getName() {
+    return "Byte-Neo4j";
+  }
 
   @Override
   public void open() {
@@ -39,12 +44,12 @@ public class Neo4j implements Database {
 
   @Override
   public void insert(@NotNull Entry @NotNull ... entries) {
-    alterEntries("UNWIND $batch AS row CREATE (e:Entry {id: row.id, first_name: row.first_name, middle_initial: row.middle_initial, last_name: row.last_name, age: row.age, net_worth: row.net_worth})", entries);
+    alterEntries("UNWIND $batch AS row CREATE (e:Entry {id: row.id, data: row.data})", entries);
   }
 
   @Override
   public void update(@NotNull Entry @NotNull ... entries) {
-    alterEntries("UNWIND $batch AS row MATCH (e:Entry {id: row.id}) SET e.first_name = row.first_name, e.middle_initial = row.middle_initial, e.last_name = row.last_name, e.age = row.age, e.net_worth = row.net_worth", entries);
+    alterEntries("UNWIND $batch AS row MATCH (e:Entry {id: row.id}) SET e.data = row.data", entries);
   }
 
   @Override
@@ -69,16 +74,13 @@ public class Neo4j implements Database {
   public Map<Integer, Entry> select() {
     Map<Integer, Entry> entries = new HashMap<>();
     try (Session session = driver.session(SessionConfig.forDatabase("neo4j"))) {
-      Result result = session.run("MATCH (e:Entry) RETURN e.id AS id, e.first_name AS first_name, e.middle_initial AS middle_initial, e.last_name AS last_name, e.age AS age, e.net_worth AS net_worth");
+      Result result = session.run("MATCH (e:Entry) RETURN e.id AS id, e.data AS data");
       while (result.hasNext()) {
         Record record = result.next();
         int id = record.get("id").asInt();
-        String firstName = record.get("first_name").asString();
-        char middleInitial = record.get("middle_initial").asString().charAt(0);
-        String lastName = record.get("last_name").asString();
-        int age = record.get("age").asInt();
-        double netWorth = record.get("net_worth").asDouble();
-        entries.put(id, new Entry(id, firstName, middleInitial, lastName, age, netWorth));
+        byte[] data = record.get("data").asByteArray();
+        Entry entry = new Entry(id, data);
+        entries.put(id, entry);
       }
     }
     return entries;
@@ -89,14 +91,8 @@ public class Neo4j implements Database {
          Transaction tx = session.beginTransaction()) {
       List<Value> records = new ArrayList<>();
       for (Entry entry : entries) {
-        records.add(Values.parameters(
-          "id", entry.getId(),
-          "first_name", entry.getFirstName(),
-          "middle_initial", String.valueOf(entry.getMiddleInitial()),
-          "last_name", entry.getLastName(),
-          "age", entry.getAge(),
-          "net_worth", entry.getNetWorth()
-        ));
+        byte[] entryBytes = entry.bytes();
+        records.add(Values.parameters("id", entry.getId(), "data", entryBytes));
       }
       tx.run(statement, Values.parameters("batch", records));
       tx.commit();
