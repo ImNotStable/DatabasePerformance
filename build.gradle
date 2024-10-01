@@ -42,3 +42,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:25.0.0'
     annotationProcessor 'org.jetbrains:annotations:25.0.0'
 }
+
+compileJava {
+    options.allCompilerArgs += ['--enable-preview']
+}
