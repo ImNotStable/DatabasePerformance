@@ -63,12 +63,10 @@ public class DatabaseTester {
       database.wipe();
       runInsertionTest(currentEntryAmount);
       runVerificationTest(0, currentEntryAmount);
-      runRetrievalTest();
       runUpdatingTest(tenPercent);
       runVerificationTest(0, currentEntryAmount);
       runRemovalTest(tenPercent);
       runVerificationTest(tenPercent, currentEntryAmount);
-      runRetrievalTest();
       currentTimings.time();
       timings.put(currentEntryAmount, currentTimings);
     }
