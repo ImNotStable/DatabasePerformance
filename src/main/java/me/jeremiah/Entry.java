@@ -8,7 +8,6 @@ import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 @AllArgsConstructor
 @Setter
@@ -27,17 +26,17 @@ public class Entry {
     this.id = id;
     ByteBuffer buffer = ByteBuffer.wrap(data);
 
-    int firstNameLength = buffer.getInt();
+    int firstNameLength = buffer.get();
     byte[] firstNameBytes = new byte[firstNameLength];
     buffer.get(firstNameBytes);
-    this.firstName = new String(firstNameBytes, StandardCharsets.UTF_8);
+    this.firstName = new String(firstNameBytes);
 
     this.middleInitial = buffer.getChar();
 
-    int lastNameLength = buffer.getInt();
+    int lastNameLength = buffer.get();
     byte[] lastNameBytes = new byte[lastNameLength];
     buffer.get(lastNameBytes);
-    this.lastName = new String(lastNameBytes, StandardCharsets.UTF_8);
+    this.lastName = new String(lastNameBytes);
 
     this.age = buffer.getInt();
     this.netWorth = buffer.getDouble();
@@ -83,24 +82,24 @@ public class Entry {
   }
 
   public byte[] bytes() {
-    byte[] firstNameBytes = firstName.getBytes(StandardCharsets.UTF_8);
-    byte[] lastNameBytes = lastName.getBytes(StandardCharsets.UTF_8);
+    byte[] firstNameBytes = firstName.getBytes();
+    byte[] lastNameBytes = lastName.getBytes();
 
     ByteBuffer buffer = ByteBuffer.allocate(
-      4 +                     // Length of firstName (int)
+      1 +                     // Length of firstName (int)
       firstNameBytes.length + // Actual firstName bytes
       2 +                     // middleInitial (char)
-      4 +                     // Length of lastName (int)
+      1 +                     // Length of lastName (int)
       lastNameBytes.length +  // Actual lastName bytes
       4 +                     // age (int)
       8                       // netWorth (double)
     );
 
     buffer
-      .putInt(firstNameBytes.length)  // Length of firstName
+      .put((byte) firstNameBytes.length)  // Length of firstName
       .put(firstNameBytes)            // firstName bytes
       .putChar(middleInitial)         // middleInitial
-      .putInt(lastNameBytes.length)   // Length of lastName
+      .put((byte) lastNameBytes.length)   // Length of lastName
       .put(lastNameBytes)             // lastName bytes
       .putInt(age)                    // age
       .putDouble(netWorth);           // netWorth
