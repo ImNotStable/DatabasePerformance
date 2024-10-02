@@ -40,7 +40,7 @@ public class DatabaseTester {
   }
 
   private void generateEntries() {
-    Arrays.parallelSetAll(entries, Entry::new);
+    Arrays.setAll(entries, Entry::new);
   }
 
   public void start() {
