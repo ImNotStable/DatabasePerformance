@@ -12,7 +12,7 @@ import java.sql.SQLException;
 @Getter
 class SQLStatementHandler {
 
-  private String createTableStatement = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32), middle_initial CHAR(1), last_name VARCHAR(32), age SMALLINT, net_worth FLOAT(53))";
+  private String createTableStatement = "CREATE TABLE entries(id INT PRIMARY KEY, first_name VARCHAR(32) NOT NULL, middle_initial CHAR(1) NOT NULL, last_name VARCHAR(32) NOT NULL, age SMALLINT NOT NULL, net_worth FLOAT(53) NOT NULL)";
   private String dropTableStatement = "DROP TABLE entries";
 
   private String tableWipeStatement = "DELETE FROM entries";
