@@ -12,9 +12,8 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class AbstractSQLDatabase extends SQLStatementHandler implements Database {
+abstract class AbstractSQLDatabase extends SQLStatementHandler implements Database {
 
   private static final int MAX_BATCH_SIZE = 1000;
 
@@ -23,17 +22,18 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
   private HikariDataSource dataSource;
 
   public AbstractSQLDatabase(Class<? extends Driver> driver, String url) {
-    try {
-      DriverManager.registerDriver(driver.getConstructor().newInstance());
-    } catch (Exception exception) {
-      ExceptionManager.handleException(this, exception);
-    }
+    if (DriverManager.drivers().noneMatch(driver::isInstance))
+      try {
+        DriverManager.registerDriver(driver.getConstructor().newInstance());
+      } catch (Exception exception) {
+        ExceptionManager.handleException(this, exception);
+      }
 
     config = new HikariConfig();
     config.setJdbcUrl(url);
     config.setAutoCommit(false);
     config.setMaximumPoolSize(20);
-    config.setMinimumIdle(5);
+    config.setMinimumIdle(10);
     config.setConnectionTimeout(30000);
     config.setIdleTimeout(600000);
     config.setMaxLifetime(1800000);
@@ -65,6 +65,7 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     try {
       statement.execute(getCreateTableStatement());
       connection.commit();
+
     } catch (SQLException exception) {
       ExceptionManager.handleException(this, exception);
     }
@@ -117,11 +118,11 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     }).orElseGet(HashMap::new);
   }
 
-  private void handle(String statement) {
+  protected void handle(String statement) {
     handle(statement, PreparedStatement::execute);
   }
 
-  private void handle(String statement, SQLAction action) {
+  protected void handle(String statement, SQLAction action) {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
       action.accept(preparedStatement);
@@ -131,7 +132,7 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     }
   }
 
-  private <W> void handleBatchAction(String statement, W[] writables, SQLBatchAction<W> parser) {
+  protected <W> void handleBatchAction(String statement, W[] writables, SQLBatchAction<W> parser) {
     handle(statement, preparedStatement -> {
       int count = 0;
       for (W writable : writables) {
@@ -144,34 +145,36 @@ public abstract class AbstractSQLDatabase extends SQLStatementHandler implements
     });
   }
 
-  private <R> Optional<R> handleQuery(String statement, SQLQuery<R> query) {
+  protected <R> Optional<R> handleQuery(String statement, SQLQuery<R> query) {
     return handleQuery(statement, _ -> {}, query);
   }
 
-  private <R> Optional<R> handleQuery(String statement, SQLAction action, SQLQuery<R> query) {
-    AtomicReference<R> result = new AtomicReference<>();
-    handle(statement, preparedStatement -> {
+  protected <R> Optional<R> handleQuery(String statement, SQLAction action, SQLQuery<R> query) {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(statement)) {
       action.accept(preparedStatement);
       try (ResultSet resultSet = preparedStatement.executeQuery()) {
-        result.set(query.apply(resultSet));
+        return Optional.ofNullable(query.apply(resultSet));
       }
-    });
-    return Optional.ofNullable(result.get());
+    } catch (SQLException exception) {
+      ExceptionManager.handleException(this, exception);
+    }
+    return Optional.empty();
   }
 
-  private interface SQLAction {
+  protected interface SQLAction {
 
     void accept(PreparedStatement preparedStatement) throws SQLException;
 
   }
 
-  private interface SQLBatchAction<W> {
+  protected interface SQLBatchAction<W> {
 
     void accept(W writable, PreparedStatement preparedStatement) throws SQLException;
 
   }
 
-  private interface SQLQuery<R> {
+  protected interface SQLQuery<R> {
 
     R apply(ResultSet resultSet) throws SQLException;
 
