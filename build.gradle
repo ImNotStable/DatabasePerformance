@@ -11,7 +11,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-nop:2.0.17'
 
     // SQL Related Dependencies
-    implementation 'com.zaxxer:HikariCP:6.2.1'
+    implementation 'com.zaxxer:HikariCP:6.3.0'
 
     // Flat-file JDBC
     implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
