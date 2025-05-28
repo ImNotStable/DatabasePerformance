@@ -20,7 +20,7 @@ dependencies {
     // Remote JDBC
     implementation 'com.mysql:mysql-connector-j:9.3.0'
     implementation 'org.mariadb.jdbc:mariadb-java-client:3.5.3'
-    implementation 'org.postgresql:postgresql:42.7.5'
+    implementation 'org.postgresql:postgresql:42.7.6'
     implementation 'com.oracle.database.jdbc:ojdbc11:23.8.0.25.04'
     implementation 'com.microsoft.sqlserver:mssql-jdbc:12.10.0.jre11'
 
